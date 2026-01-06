@@ -61,6 +61,8 @@ describe('ConfigManager', () => {
       fs.existsSync.mockReturnValue(true);
       fs.readFileSync.mockReturnValue('invalid json');
 
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       const config = ConfigManager.getConfig();
 
       expect(config).toEqual({
@@ -68,6 +70,8 @@ describe('ConfigManager', () => {
         organizations: [],
         settings: {},
       });
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -106,9 +110,13 @@ describe('ConfigManager', () => {
         throw new Error('Write failed');
       });
 
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
       const result = ConfigManager.saveConfig({ test: true });
 
       expect(result).toBe(false);
+
+      consoleSpy.mockRestore();
     });
   });
 
