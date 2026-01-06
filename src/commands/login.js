@@ -9,6 +9,7 @@ const backendClient = require('../api/backend-client');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const projectDetector = require('../detectors');
+const { showLogo } = require('../logo');
 
 /**
  * Generate retro Windows 95 style HTML page
@@ -123,6 +124,11 @@ async function handleLogin() {
     // Check if already logged in
     if (configManager.isLoggedIn()) {
       const session = configManager.getSession();
+
+      // Show logo
+      console.log('');
+      showLogo(false);
+
       console.log(chalk.green('  ✅ You are already logged in'));
       if (session.email) {
         console.log(chalk.gray(`  Email: ${session.email}`));
@@ -179,7 +185,11 @@ async function handleLogin() {
       console.log(chalk.gray('  Session saved, but validation failed. You may need to log in again.'));
     }
 
-    console.log(chalk.green('\n  ✅ Successfully logged in!\n'));
+    // Show logo after successful login
+    console.log('');
+    showLogo(false);
+
+    console.log(chalk.green('  ✅ Successfully logged in!\n'));
 
     const finalSession = configManager.getSession();
     if (finalSession && finalSession.email) {

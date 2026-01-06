@@ -16,6 +16,9 @@ jest.mock('../../src/detectors', () => ({
     projectPath: '/test/path',
   }),
 }));
+jest.mock('../../src/logo', () => ({
+  showLogo: jest.fn(),
+}));
 jest.mock('chalk', () => ({
   cyan: (str) => str,
   yellow: (str) => str,
