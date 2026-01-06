@@ -300,21 +300,63 @@ async function handleSpread() {
         if (error.suggestion) {
           console.log(chalk.gray(`  ${error.suggestion}`));
         }
-        console.log(chalk.gray('\n  You can enter an existing API key or upgrade your plan.\n'));
 
-        const { manualKey } = await inquirer.prompt([
-          {
-            type: 'input',
-            name: 'manualKey',
-            message: 'Enter your existing API key (or press Enter to exit):',
-          },
-        ]);
+        // Show upgrade option if available
+        if (error.upgradeUrl) {
+          console.log(chalk.cyan(`\n  🚀 Upgrade your plan to get more API keys:`));
+          console.log(chalk.gray(`     ${error.upgradeUrl}\n`));
 
-        if (manualKey.trim()) {
-          apiKey = manualKey.trim();
-          console.log(chalk.green(`  ✅ Using provided API key\n`));
+          const { action } = await inquirer.prompt([
+            {
+              type: 'list',
+              name: 'action',
+              message: 'What would you like to do?',
+              choices: [
+                { name: 'Open upgrade page in browser', value: 'upgrade' },
+                { name: 'Enter an existing API key', value: 'existing' },
+                { name: 'Exit', value: 'exit' },
+              ],
+            },
+          ]);
+
+          if (action === 'upgrade') {
+            const { default: open } = require('open');
+            console.log(chalk.gray('  Opening browser...'));
+            await open(error.upgradeUrl);
+            console.log(chalk.gray('\n  After upgrading, run "l4yercak3 spread" again.\n'));
+            process.exit(0);
+          } else if (action === 'existing') {
+            const { manualKey } = await inquirer.prompt([
+              {
+                type: 'input',
+                name: 'manualKey',
+                message: 'Enter your existing API key:',
+                validate: (input) => input.trim().length > 0 || 'API key is required',
+              },
+            ]);
+            apiKey = manualKey.trim();
+            console.log(chalk.green(`  ✅ Using provided API key\n`));
+          } else {
+            process.exit(0);
+          }
         } else {
-          process.exit(0);
+          // No upgrade URL - fallback to manual entry
+          console.log(chalk.gray('\n  You can enter an existing API key or upgrade your plan.\n'));
+
+          const { manualKey } = await inquirer.prompt([
+            {
+              type: 'input',
+              name: 'manualKey',
+              message: 'Enter your existing API key (or press Enter to exit):',
+            },
+          ]);
+
+          if (manualKey.trim()) {
+            apiKey = manualKey.trim();
+            console.log(chalk.green(`  ✅ Using provided API key\n`));
+          } else {
+            process.exit(0);
+          }
         }
       } else if (error.code === 'SESSION_EXPIRED') {
         console.log(chalk.red(`\n  ❌ Session expired. Please run "l4yercak3 login" again.\n`));

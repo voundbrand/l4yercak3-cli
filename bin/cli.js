@@ -15,6 +15,7 @@ const logoutCommand = require('../src/commands/logout');
 const statusCommand = require('../src/commands/status');
 const spreadCommand = require('../src/commands/spread');
 const apiKeysCommand = require('../src/commands/api-keys');
+const upgradeCommand = require('../src/commands/upgrade');
 
 // Create CLI program
 const program = new Command();
@@ -53,6 +54,11 @@ program
   .command(apiKeysCommand.command)
   .description(apiKeysCommand.description)
   .action(apiKeysCommand.handler);
+
+program
+  .command(upgradeCommand.command)
+  .description(upgradeCommand.description)
+  .action(upgradeCommand.handler);
 
 // Show logo and welcome message if no command provided
 if (process.argv.length === 2) {

@@ -56,9 +56,11 @@ class BackendClient {
 
       if (!response.ok) {
         // Create error with additional details from backend
-        const error = new Error(responseData.message || `API request failed: ${response.status}`);
+        const error = new Error(responseData.message || responseData.error || `API request failed: ${response.status}`);
         error.code = responseData.code || 'UNKNOWN_ERROR';
         error.suggestion = responseData.suggestion || null;
+        error.upgradeUrl = responseData.upgradeUrl || null;
+        error.upgradeCommand = responseData.upgradeCommand || null;
         error.status = response.status;
         throw error;
       }
