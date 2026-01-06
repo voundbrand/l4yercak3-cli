@@ -37,6 +37,7 @@ class BackendClient {
 
   /**
    * Make API request
+   * Returns response data with error details preserved for specific handling
    */
   async request(method, endpoint, data = null) {
     const url = `${this.baseUrl}${endpoint}`;
@@ -54,7 +55,12 @@ class BackendClient {
       const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(responseData.message || `API request failed: ${response.status}`);
+        // Create error with additional details from backend
+        const error = new Error(responseData.message || `API request failed: ${response.status}`);
+        error.code = responseData.code || 'UNKNOWN_ERROR';
+        error.suggestion = responseData.suggestion || null;
+        error.status = response.status;
+        throw error;
       }
 
       return responseData;
@@ -125,12 +131,18 @@ class BackendClient {
   }
 
   /**
+   * List API keys for an organization
+   * Returns: { keys, limit, currentCount, canCreateMore, limitDescription }
+   */
+  async listApiKeys(organizationId) {
+    return await this.request('GET', `/api/v1/api-keys/list?organizationId=${organizationId}`);
+  }
+
+  /**
    * Generate API key for organization
    * Note: This calls Convex action directly, requires session
    */
   async generateApiKey(organizationId, name, scopes = ['*']) {
-    // This will need to call Convex action via backend API wrapper
-    // For now, placeholder
     return await this.request('POST', `/api/v1/api-keys/generate`, {
       organizationId,
       name,

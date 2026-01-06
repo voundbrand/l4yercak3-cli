@@ -20,13 +20,34 @@ async function createOrganization(orgName) {
   // Handle different response formats
   const organizationId = newOrg.organizationId || newOrg.id || newOrg.data?.organizationId || newOrg.data?.id;
   const organizationName = newOrg.name || orgName;
-  
+
   if (!organizationId) {
     throw new Error('Organization ID not found in response. Please check backend API endpoint.');
   }
-  
+
   console.log(chalk.green(`  ✅ Organization created: ${organizationName}\n`));
   return { organizationId, organizationName };
+}
+
+/**
+ * Helper function to generate a new API key
+ */
+async function generateNewApiKey(organizationId) {
+  console.log(chalk.gray('  Generating API key...'));
+  const apiKeyResponse = await backendClient.generateApiKey(
+    organizationId,
+    'CLI Generated Key',
+    ['*']
+  );
+  // Handle different response formats
+  const apiKey = apiKeyResponse.key || apiKeyResponse.apiKey || apiKeyResponse.data?.key || apiKeyResponse.data?.apiKey;
+
+  if (!apiKey) {
+    throw new Error('API key not found in response. Please check backend API endpoint.');
+  }
+
+  console.log(chalk.green(`  ✅ API key generated\n`));
+  return apiKey;
 }
 
 async function handleSpread() {
@@ -181,28 +202,130 @@ async function handleSpread() {
       process.exit(1);
     }
 
-    // Step 3: Generate API key
+    // Step 3: API Key Setup
     console.log(chalk.cyan('  🔑 API Key Setup\n'));
     let apiKey;
 
     try {
-      console.log(chalk.gray('  Generating API key...'));
-      const apiKeyResponse = await backendClient.generateApiKey(
-        organizationId,
-        'CLI Generated Key',
-        ['*']
-      );
-      // Handle different response formats
-      apiKey = apiKeyResponse.key || apiKeyResponse.apiKey || apiKeyResponse.data?.key || apiKeyResponse.data?.apiKey;
-      
-      if (!apiKey) {
-        throw new Error('API key not found in response. Please check backend API endpoint.');
+      // First, check if organization already has API keys
+      console.log(chalk.gray('  Checking existing API keys...'));
+      let existingKeys = null;
+
+      try {
+        existingKeys = await backendClient.listApiKeys(organizationId);
+      } catch (listError) {
+        // If listing fails, continue to try generating
+        console.log(chalk.gray('  Could not check existing keys, attempting to generate...'));
       }
-      
-      console.log(chalk.green(`  ✅ API key generated\n`));
+
+      if (existingKeys && existingKeys.keys && existingKeys.keys.length > 0) {
+        // Organization has existing keys
+        console.log(chalk.yellow(`  ⚠️  Found ${existingKeys.keys.length} existing API key(s)`));
+
+        if (existingKeys.limitDescription) {
+          console.log(chalk.gray(`     Limit: ${existingKeys.limitDescription}`));
+        }
+
+        // Show existing keys (masked)
+        existingKeys.keys.forEach((key, i) => {
+          const maskedKey = key.key ? `${key.key.substring(0, 10)}...` : key.name || `Key ${i + 1}`;
+          console.log(chalk.gray(`     • ${key.name || 'Unnamed'}: ${maskedKey}`));
+        });
+        console.log('');
+
+        if (!existingKeys.canCreateMore) {
+          // At limit - offer to use existing key
+          const { useExisting } = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'useExisting',
+              message: 'You\'ve reached your API key limit. Use an existing key from your .env.local file?',
+              default: true,
+            },
+          ]);
+
+          if (useExisting) {
+            const { manualKey } = await inquirer.prompt([
+              {
+                type: 'input',
+                name: 'manualKey',
+                message: 'Enter your existing API key:',
+                validate: (input) => input.trim().length > 0 || 'API key is required',
+              },
+            ]);
+            apiKey = manualKey.trim();
+            console.log(chalk.green(`  ✅ Using provided API key\n`));
+          } else {
+            console.log(chalk.yellow('\n  ⚠️  To generate more API keys, upgrade your plan at https://app.l4yercak3.com/settings/billing\n'));
+            process.exit(0);
+          }
+        } else {
+          // Can create more - ask what to do
+          const { keyAction } = await inquirer.prompt([
+            {
+              type: 'list',
+              name: 'keyAction',
+              message: 'What would you like to do?',
+              choices: [
+                { name: 'Generate a new API key', value: 'generate' },
+                { name: 'Enter an existing API key', value: 'existing' },
+              ],
+            },
+          ]);
+
+          if (keyAction === 'existing') {
+            const { manualKey } = await inquirer.prompt([
+              {
+                type: 'input',
+                name: 'manualKey',
+                message: 'Enter your existing API key:',
+                validate: (input) => input.trim().length > 0 || 'API key is required',
+              },
+            ]);
+            apiKey = manualKey.trim();
+            console.log(chalk.green(`  ✅ Using provided API key\n`));
+          } else {
+            // Generate new key
+            apiKey = await generateNewApiKey(organizationId);
+          }
+        }
+      } else {
+        // No existing keys - generate one
+        apiKey = await generateNewApiKey(organizationId);
+      }
     } catch (error) {
-      console.error(chalk.red(`  ❌ Error generating API key: ${error.message}\n`));
-      process.exit(1);
+      // Handle specific error codes
+      if (error.code === 'API_KEY_LIMIT_REACHED') {
+        console.log(chalk.yellow(`\n  ⚠️  ${error.message}`));
+        if (error.suggestion) {
+          console.log(chalk.gray(`  ${error.suggestion}`));
+        }
+        console.log(chalk.gray('\n  You can enter an existing API key or upgrade your plan.\n'));
+
+        const { manualKey } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'manualKey',
+            message: 'Enter your existing API key (or press Enter to exit):',
+          },
+        ]);
+
+        if (manualKey.trim()) {
+          apiKey = manualKey.trim();
+          console.log(chalk.green(`  ✅ Using provided API key\n`));
+        } else {
+          process.exit(0);
+        }
+      } else if (error.code === 'SESSION_EXPIRED') {
+        console.log(chalk.red(`\n  ❌ Session expired. Please run "l4yercak3 login" again.\n`));
+        process.exit(1);
+      } else if (error.code === 'NOT_AUTHORIZED') {
+        console.log(chalk.red(`\n  ❌ You don't have permission to manage API keys for this organization.\n`));
+        process.exit(1);
+      } else {
+        console.error(chalk.red(`  ❌ Error setting up API key: ${error.message}\n`));
+        process.exit(1);
+      }
     }
 
     // Step 4: Feature selection
