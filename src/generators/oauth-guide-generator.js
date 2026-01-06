@@ -267,7 +267,7 @@ Once OAuth is set up:
 
 ---
 
-**Need Help?** Check the [L4YERCAK3 Documentation](https://docs.l4yercak3.com) or contact support.
+**Need Help?** Check the [L4YERCAK3 Documentation](https://www.l4yercak3.com/docs) or contact support.
 `;
 
     return content;

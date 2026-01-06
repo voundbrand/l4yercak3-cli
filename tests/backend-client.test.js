@@ -262,7 +262,7 @@ describe('BackendClient', () => {
     it('includes encoded callback URL', () => {
       const url = BackendClient.getLoginUrl('github');
 
-      expect(url).toContain(encodeURIComponent('http://localhost:3001/callback'));
+      expect(url).toContain(encodeURIComponent('http://localhost:3000/callback'));
     });
   });
 

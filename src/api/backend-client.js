@@ -102,7 +102,7 @@ class BackendClient {
    */
   getLoginUrl(provider = null) {
     const backendUrl = configManager.getBackendUrl();
-    const callbackUrl = 'http://localhost:3001/callback';
+    const callbackUrl = 'http://localhost:3000/callback';
     
     if (provider) {
       // Direct OAuth provider URL

@@ -266,7 +266,7 @@ describe('OAuthGuideGenerator', () => {
 
         expect(guide).toContain('## Next Steps');
         expect(guide).toContain('L4YERCAK3 Documentation');
-        expect(guide).toContain('docs.l4yercak3.com');
+        expect(guide).toContain('www.l4yercak3.com/docs');
       });
     });
   });

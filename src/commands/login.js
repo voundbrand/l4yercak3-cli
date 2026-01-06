@@ -16,7 +16,7 @@ function startCallbackServer() {
     const http = require('http');
     
     const server = http.createServer((req, res) => {
-      const url = new URL(req.url, 'http://localhost:3001');
+      const url = new URL(req.url, 'http://localhost:3000');
       
       if (url.pathname === '/callback') {
         const token = url.searchParams.get('token');
@@ -56,7 +56,7 @@ function startCallbackServer() {
       }
     });
 
-    server.listen(3001, 'localhost', () => {
+    server.listen(3000, 'localhost', () => {
       console.log(chalk.gray('  Waiting for authentication...'));
     });
 
