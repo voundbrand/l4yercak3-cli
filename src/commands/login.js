@@ -9,6 +9,34 @@ const backendClient = require('../api/backend-client');
 const chalk = require('chalk');
 
 /**
+ * Generate retro Windows 95 style HTML page
+ */
+function generateRetroPage({ title, icon, heading, headingColor, message, submessage }) {
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; background: #008080; min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+  <div style="background: #c0c0c0; border: 2px outset #dfdfdf; width: 400px; box-shadow: 2px 2px 0 #000;">
+    <div style="background: linear-gradient(90deg, #000080, #1084d0); padding: 4px 8px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="color: white; font-size: 12px; font-family: system-ui;">${icon} ${title}</span>
+      <span style="color: white;">×</span>
+    </div>
+    <div style="padding: 30px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 16px;">${icon}</div>
+      <h1 style="font-family: 'Press Start 2P', monospace; font-size: 14px; color: ${headingColor}; margin-bottom: 16px;">${heading}</h1>
+      <p style="font-family: system-ui; color: #000; font-size: 14px;">${message}</p>
+      <p style="font-family: system-ui; color: #666; font-size: 12px; margin-top: 16px;">${submessage}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
  * Start local server to receive OAuth callback
  * @param {string} expectedState - The state token to verify against
  */
@@ -25,16 +53,15 @@ function startCallbackServer(expectedState) {
 
         // Verify state to prevent CSRF attacks
         if (returnedState !== expectedState) {
-          res.writeHead(400, { 'Content-Type': 'text/html' });
-          res.end(`
-            <html>
-              <head><title>CLI Login Error</title></head>
-              <body style="font-family: system-ui; padding: 40px; text-align: center;">
-                <h1 style="color: #EF4444;">❌ Security Error</h1>
-                <p>State mismatch - possible CSRF attack. Please try again.</p>
-              </body>
-            </html>
-          `);
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(generateRetroPage({
+            title: 'CLI Login Error',
+            icon: '⚠️',
+            heading: 'Security Error',
+            headingColor: '#c00000',
+            message: 'State mismatch - possible CSRF attack.',
+            submessage: 'Close this window and run <code style="background: #fff; padding: 2px 6px; border: 1px inset #999;">l4yercak3 login</code> again.',
+          }));
 
           server.close();
           reject(new Error('State mismatch - security validation failed'));
@@ -42,30 +69,28 @@ function startCallbackServer(expectedState) {
         }
 
         if (token) {
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(`
-            <html>
-              <head><title>CLI Login Success</title></head>
-              <body style="font-family: system-ui; padding: 40px; text-align: center;">
-                <h1 style="color: #9F7AEA;">✅ Successfully logged in!</h1>
-                <p>You can close this window and return to your terminal.</p>
-              </body>
-            </html>
-          `);
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(generateRetroPage({
+            title: 'CLI Login',
+            icon: '🍰',
+            heading: 'Success!',
+            headingColor: '#008000',
+            message: 'You are now logged in.',
+            submessage: 'You can close this window and return to your terminal.',
+          }));
 
           server.close();
           resolve(token);
         } else {
-          res.writeHead(400, { 'Content-Type': 'text/html' });
-          res.end(`
-            <html>
-              <head><title>CLI Login Error</title></head>
-              <body style="font-family: system-ui; padding: 40px; text-align: center;">
-                <h1 style="color: #EF4444;">❌ Login failed</h1>
-                <p>No token received. Please try again.</p>
-              </body>
-            </html>
-          `);
+          res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(generateRetroPage({
+            title: 'CLI Login Error',
+            icon: '⚠️',
+            heading: 'Login Failed',
+            headingColor: '#c00000',
+            message: 'No token received. Please try again.',
+            submessage: 'Close this window and run <code style="background: #fff; padding: 2px 6px; border: 1px inset #999;">l4yercak3 login</code> again.',
+          }));
 
           server.close();
           reject(new Error('No token received'));
