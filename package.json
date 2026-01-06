@@ -4,8 +4,8 @@
   "description": "Icing on the L4yercak3 - The sweet finishing touch for your Layer Cake integration",
   "main": "src/index.js",
   "bin": {
-    "l4yercak3": "./bin/cli.js",
-    "icing": "./bin/cli.js"
+    "l4yercak3": "bin/cli.js",
+    "icing": "bin/cli.js"
   },
   "scripts": {
     "start": "node bin/cli.js",
@@ -21,9 +21,15 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"],
-    "collectCoverageFrom": ["src/**/*.js"],
-    "coveragePathIgnorePatterns": ["/node_modules/"]
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
   },
   "keywords": [
     "l4yercak3",
