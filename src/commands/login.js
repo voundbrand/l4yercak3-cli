@@ -10,17 +10,37 @@ const chalk = require('chalk');
 
 /**
  * Start local server to receive OAuth callback
+ * @param {string} expectedState - The state token to verify against
  */
-function startCallbackServer() {
+function startCallbackServer(expectedState) {
   return new Promise((resolve, reject) => {
     const http = require('http');
-    
+
     const server = http.createServer((req, res) => {
       const url = new URL(req.url, 'http://localhost:3000');
-      
+
       if (url.pathname === '/callback') {
         const token = url.searchParams.get('token');
-        
+        const returnedState = url.searchParams.get('state');
+
+        // Verify state to prevent CSRF attacks
+        if (returnedState !== expectedState) {
+          res.writeHead(400, { 'Content-Type': 'text/html' });
+          res.end(`
+            <html>
+              <head><title>CLI Login Error</title></head>
+              <body style="font-family: system-ui; padding: 40px; text-align: center;">
+                <h1 style="color: #EF4444;">❌ Security Error</h1>
+                <p>State mismatch - possible CSRF attack. Please try again.</p>
+              </body>
+            </html>
+          `);
+
+          server.close();
+          reject(new Error('State mismatch - security validation failed'));
+          return;
+        }
+
         if (token) {
           res.writeHead(200, { 'Content-Type': 'text/html' });
           res.end(`
@@ -32,7 +52,7 @@ function startCallbackServer() {
               </body>
             </html>
           `);
-          
+
           server.close();
           resolve(token);
         } else {
@@ -46,7 +66,7 @@ function startCallbackServer() {
               </body>
             </html>
           `);
-          
+
           server.close();
           reject(new Error('No token received'));
         }
@@ -85,13 +105,16 @@ async function handleLogin() {
 
     console.log(chalk.cyan('  🔐 Opening browser for authentication...\n'));
 
-    // Start callback server
-    const callbackPromise = startCallbackServer();
+    // Generate state for CSRF protection
+    const state = backendClient.generateState();
 
-    // Open browser
-    const loginUrl = backendClient.getLoginUrl();
+    // Start callback server with expected state
+    const callbackPromise = startCallbackServer(state);
+
+    // Open browser with state parameter
+    const loginUrl = backendClient.getLoginUrl(state);
     console.log(chalk.gray(`  Login URL: ${loginUrl}\n`));
-    
+
     await open(loginUrl);
 
     // Wait for callback

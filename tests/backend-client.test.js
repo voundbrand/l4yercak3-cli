@@ -242,25 +242,45 @@ describe('BackendClient', () => {
     });
   });
 
+  describe('generateState', () => {
+    it('generates a 64-character hex string', () => {
+      const state = BackendClient.generateState();
+
+      expect(state).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it('generates unique values each time', () => {
+      const state1 = BackendClient.generateState();
+      const state2 = BackendClient.generateState();
+
+      expect(state1).not.toBe(state2);
+    });
+  });
+
   describe('getLoginUrl', () => {
-    it('returns provider selection URL when no provider specified', () => {
-      const url = BackendClient.getLoginUrl();
+    it('returns provider selection URL with state when no provider specified', () => {
+      const state = 'test-state-token';
+      const url = BackendClient.getLoginUrl(state);
 
       expect(url).toContain('https://backend.test.com');
       expect(url).toContain('/auth/cli-login');
+      expect(url).toContain('state=test-state-token');
       expect(url).toContain('callback=');
     });
 
     it('returns direct OAuth URL when provider specified', () => {
-      const url = BackendClient.getLoginUrl('google');
+      const state = 'test-state-token';
+      const url = BackendClient.getLoginUrl(state, 'google');
 
       expect(url).toContain('/api/auth/oauth-signup');
       expect(url).toContain('provider=google');
       expect(url).toContain('sessionType=cli');
+      expect(url).toContain('state=test-state-token');
     });
 
     it('includes encoded callback URL', () => {
-      const url = BackendClient.getLoginUrl('github');
+      const state = 'test-state-token';
+      const url = BackendClient.getLoginUrl(state, 'github');
 
       expect(url).toContain(encodeURIComponent('http://localhost:3000/callback'));
     });
