@@ -36,7 +36,7 @@ describe('ConfigManager', () => {
         session: null,
         organizations: [],
         settings: {
-          backendUrl: 'https://backend.l4yercak3.com',
+          backendUrl: 'https://app.l4yercak3.com',
         },
       });
     });
@@ -204,7 +204,7 @@ describe('ConfigManager', () => {
 
       const url = ConfigManager.getBackendUrl();
 
-      expect(url).toBe('https://backend.l4yercak3.com');
+      expect(url).toBe('https://app.l4yercak3.com');
     });
 
     it('returns configured URL from settings', () => {
