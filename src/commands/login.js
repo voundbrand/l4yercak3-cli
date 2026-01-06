@@ -7,6 +7,8 @@ const { default: open } = require('open');
 const configManager = require('../config/config-manager');
 const backendClient = require('../api/backend-client');
 const chalk = require('chalk');
+const inquirer = require('inquirer');
+const projectDetector = require('../detectors');
 
 /**
  * Generate retro Windows 95 style HTML page
@@ -174,15 +176,87 @@ async function handleLogin() {
     }
 
     console.log(chalk.green('\n  ✅ Successfully logged in!\n'));
-    
+
     const finalSession = configManager.getSession();
     if (finalSession && finalSession.email) {
       console.log(chalk.gray(`  Logged in as: ${finalSession.email}`));
     }
 
+    // Post-login: Prompt to run setup wizard
+    await promptSetupWizard();
+
   } catch (error) {
     console.error(chalk.red(`\n  ❌ Login failed: ${error.message}\n`));
     process.exit(1);
+  }
+}
+
+/**
+ * Prompt user to run the setup wizard after login
+ */
+async function promptSetupWizard() {
+  console.log('');
+
+  // Detect if we're in a project directory
+  const detection = projectDetector.detect();
+  const isInProject = detection.framework.type !== null;
+
+  if (isInProject) {
+    const frameworkName = detection.framework.type === 'nextjs' ? 'Next.js' : detection.framework.type;
+    console.log(chalk.cyan(`  🔍 Detected ${frameworkName} project in current directory\n`));
+
+    // Check if project is already configured
+    const existingConfig = configManager.getProjectConfig(detection.projectPath);
+    if (existingConfig) {
+      console.log(chalk.yellow('  ⚠️  This project is already configured with L4YERCAK3'));
+      console.log(chalk.gray(`     Organization: ${existingConfig.organizationName || 'Unknown'}`));
+      console.log(chalk.gray(`     Features: ${existingConfig.features?.join(', ') || 'None'}\n`));
+
+      const { reconfigure } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'reconfigure',
+          message: 'Would you like to reconfigure this project?',
+          default: false,
+        },
+      ]);
+
+      if (!reconfigure) {
+        console.log(chalk.gray('\n  Run "l4yercak3 spread" anytime to reconfigure.\n'));
+        return;
+      }
+    } else {
+      const { runWizard } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'runWizard',
+          message: 'Would you like to set up L4YERCAK3 integration for this project now?',
+          default: true,
+        },
+      ]);
+
+      if (!runWizard) {
+        console.log(chalk.gray('\n  Run "l4yercak3 spread" anytime to set up your project.\n'));
+        return;
+      }
+    }
+
+    // Run the setup wizard
+    console.log('');
+    const { handler: spreadHandler } = require('./spread');
+    await spreadHandler();
+
+  } else {
+    // Not in a project directory
+    console.log(chalk.cyan('  📋 What\'s Next?\n'));
+    console.log(chalk.gray('  To integrate L4YERCAK3 with your Next.js project:'));
+    console.log(chalk.gray('  1. Navigate to your project directory'));
+    console.log(chalk.gray('  2. Run: l4yercak3 spread\n'));
+    console.log(chalk.gray('  This will set up:'));
+    console.log(chalk.gray('  • API client for backend communication'));
+    console.log(chalk.gray('  • Environment variables'));
+    console.log(chalk.gray('  • OAuth authentication (optional)'));
+    console.log(chalk.gray('  • CRM, Projects, and Invoices integration\n'));
   }
 }
 
