@@ -123,10 +123,14 @@ async function handleLogin() {
     // Check if already logged in
     if (configManager.isLoggedIn()) {
       const session = configManager.getSession();
-      console.log(chalk.yellow('  ⚠️  You are already logged in'));
-      console.log(chalk.gray(`  Email: ${session.email}`));
-      console.log(chalk.gray(`  Session expires: ${new Date(session.expiresAt).toLocaleString()}`));
-      console.log(chalk.gray('\n  Run "l4yercak3 logout" to log out first\n'));
+      console.log(chalk.green('  ✅ You are already logged in'));
+      if (session.email) {
+        console.log(chalk.gray(`  Email: ${session.email}`));
+      }
+      console.log(chalk.gray(`  Session expires: ${new Date(session.expiresAt).toLocaleString()}\n`));
+
+      // Still offer the setup wizard
+      await promptSetupWizard();
       return;
     }
 

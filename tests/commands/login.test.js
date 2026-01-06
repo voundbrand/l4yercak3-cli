@@ -77,7 +77,7 @@ describe('Login Command', () => {
   });
 
   describe('handler - already logged in', () => {
-    it('shows warning when already logged in', async () => {
+    it('shows success message when already logged in', async () => {
       configManager.isLoggedIn.mockReturnValue(true);
       configManager.getSession.mockReturnValue({
         email: 'user@example.com',
@@ -91,7 +91,7 @@ describe('Login Command', () => {
       expect(open).not.toHaveBeenCalled();
     });
 
-    it('suggests logout when already logged in', async () => {
+    it('shows session info and offers setup wizard when already logged in', async () => {
       configManager.isLoggedIn.mockReturnValue(true);
       configManager.getSession.mockReturnValue({
         email: 'user@example.com',
@@ -100,7 +100,8 @@ describe('Login Command', () => {
 
       await loginCommand.handler();
 
-      expect(consoleOutput.some((line) => line.includes('logout'))).toBe(true);
+      // Should show "What's Next" since we're not in a project (mocked)
+      expect(consoleOutput.some((line) => line.includes("What's Next"))).toBe(true);
     });
   });
 
