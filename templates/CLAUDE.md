@@ -29,7 +29,7 @@ The CLI generates these files based on selected features:
 | File | Purpose |
 |------|---------|
 | `.env.local` | Environment variables (API keys, secrets) |
-| `src/lib/l4yercak3/api-client.js` | API client for L4YERCAK3 backend |
+| `src/lib/api-client.js` | API client for L4YERCAK3 backend (or `.ts` for TypeScript) |
 | `src/app/api/auth/[...nextauth]/route.js` | NextAuth.js configuration (if OAuth enabled) |
 | `OAUTH_SETUP_GUIDE.md` | OAuth provider setup instructions (if OAuth enabled) |
 
@@ -48,16 +48,25 @@ NEXTAUTH_URL=             # Your app URL (if using OAuth)
 ## Using the API Client
 
 ```javascript
-import { l4yercak3 } from '@/lib/l4yercak3/api-client';
+import L4YERCAK3Client from '@/lib/api-client';
 
-// Example: Fetch CRM contacts
-const contacts = await l4yercak3.crm.getContacts();
+// Create client instance (uses env defaults if no args)
+const client = new L4YERCAK3Client();
 
-// Example: Create a customer
-const customer = await l4yercak3.crm.createContact({
-  email: 'user@example.com',
-  name: 'John Doe'
-});
+// CRM Methods
+const contacts = await client.getContacts();
+const contact = await client.getContact('contact-id');
+const newContact = await client.createContact({ email: 'user@example.com', name: 'John Doe' });
+await client.updateContact('contact-id', { name: 'Jane Doe' });
+await client.deleteContact('contact-id');
+
+// Projects Methods
+const projects = await client.getProjects();
+const project = await client.createProject({ name: 'New Project' });
+
+// Invoices Methods
+const invoices = await client.getInvoices();
+const invoice = await client.createInvoice({ amount: 100, contactId: 'contact-id' });
 ```
 
 ## Re-running Setup
