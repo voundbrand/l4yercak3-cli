@@ -1,0 +1,98 @@
+/**
+ * Tests for Login Command
+ */
+
+jest.mock('open', () => ({
+  default: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('../../src/config/config-manager');
+jest.mock('../../src/api/backend-client');
+jest.mock('chalk', () => ({
+  cyan: (str) => str,
+  yellow: (str) => str,
+  green: (str) => str,
+  gray: (str) => str,
+  red: (str) => str,
+}));
+
+const configManager = require('../../src/config/config-manager');
+const backendClient = require('../../src/api/backend-client');
+const { default: open } = require('open');
+
+// Can't easily test the full flow with HTTP server, so test module exports
+const loginCommand = require('../../src/commands/login');
+
+describe('Login Command', () => {
+  let consoleOutput = [];
+  let consoleErrors = [];
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+  const originalProcessExit = process.exit;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    consoleOutput = [];
+    consoleErrors = [];
+    console.log = jest.fn((...args) => {
+      consoleOutput.push(args.join(' '));
+    });
+    console.error = jest.fn((...args) => {
+      consoleErrors.push(args.join(' '));
+    });
+    process.exit = jest.fn();
+
+    configManager.getSession.mockReturnValue(null);
+    backendClient.getLoginUrl.mockReturnValue('https://backend.test.com/auth/cli-login');
+  });
+
+  afterEach(() => {
+    console.log = originalConsoleLog;
+    console.error = originalConsoleError;
+    process.exit = originalProcessExit;
+  });
+
+  describe('module exports', () => {
+    it('exports command name', () => {
+      expect(loginCommand.command).toBe('login');
+    });
+
+    it('exports description', () => {
+      expect(loginCommand.description).toBe('Authenticate with L4YERCAK3 platform');
+    });
+
+    it('exports handler function', () => {
+      expect(typeof loginCommand.handler).toBe('function');
+    });
+  });
+
+  describe('handler - already logged in', () => {
+    it('shows warning when already logged in', async () => {
+      configManager.isLoggedIn.mockReturnValue(true);
+      configManager.getSession.mockReturnValue({
+        email: 'user@example.com',
+        expiresAt: Date.now() + 3600000,
+      });
+
+      await loginCommand.handler();
+
+      expect(consoleOutput.some((line) => line.includes('already logged in'))).toBe(true);
+      expect(consoleOutput.some((line) => line.includes('user@example.com'))).toBe(true);
+      expect(open).not.toHaveBeenCalled();
+    });
+
+    it('suggests logout when already logged in', async () => {
+      configManager.isLoggedIn.mockReturnValue(true);
+      configManager.getSession.mockReturnValue({
+        email: 'user@example.com',
+        expiresAt: Date.now() + 3600000,
+      });
+
+      await loginCommand.handler();
+
+      expect(consoleOutput.some((line) => line.includes('logout'))).toBe(true);
+    });
+  });
+
+  // Note: Full login flow testing is complex due to HTTP server
+  // These tests verify the basic structure and early-exit paths
+});

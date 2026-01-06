@@ -1,0 +1,50 @@
+/**
+ * File Generators
+ * Main entry point for all file generation
+ */
+
+const apiClientGenerator = require('./api-client-generator');
+const envGenerator = require('./env-generator');
+const nextauthGenerator = require('./nextauth-generator');
+const oauthGuideGenerator = require('./oauth-guide-generator');
+const gitignoreGenerator = require('./gitignore-generator');
+
+class FileGenerator {
+  /**
+   * Generate all files based on configuration
+   */
+  async generate(options) {
+    const results = {
+      apiClient: null,
+      envFile: null,
+      nextauth: null,
+      oauthGuide: null,
+      gitignore: null,
+    };
+
+    // Generate API client
+    if (options.features && options.features.length > 0) {
+      results.apiClient = apiClientGenerator.generate(options);
+    }
+
+    // Generate environment file
+    results.envFile = envGenerator.generate(options);
+
+    // Generate NextAuth.js config if OAuth is enabled
+    if (options.features && options.features.includes('oauth') && options.oauthProviders) {
+      results.nextauth = nextauthGenerator.generate(options);
+    }
+
+    // Generate OAuth guide if OAuth is enabled
+    if (options.features && options.features.includes('oauth') && options.oauthProviders) {
+      results.oauthGuide = oauthGuideGenerator.generate(options);
+    }
+
+    // Update .gitignore
+    results.gitignore = gitignoreGenerator.generate(options);
+
+    return results;
+  }
+}
+
+module.exports = new FileGenerator();
