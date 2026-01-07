@@ -6,6 +6,7 @@
  */
 
 const nextJsDetector = require('./nextjs-detector');
+const expoDetector = require('./expo-detector');
 // Future detectors will be added here:
 // const reactDetector = require('./react-detector');
 // const vueDetector = require('./vue-detector');
@@ -16,6 +17,7 @@ const nextJsDetector = require('./nextjs-detector');
  */
 const detectors = [
   nextJsDetector,
+  expoDetector,
   // Future: reactDetector, vueDetector, etc.
 ];
 
