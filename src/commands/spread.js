@@ -242,6 +242,7 @@ async function handleSpread() {
             value: key.id,
           }));
           keyChoices.push({ name: '➕ Generate a new API key', value: '__generate__' });
+          keyChoices.push({ name: '⏭️  Skip - I already have my key configured', value: '__skip__' });
 
           const { keyChoice } = await inquirer.prompt([
             {
@@ -254,6 +255,9 @@ async function handleSpread() {
 
           if (keyChoice === '__generate__') {
             apiKey = await generateNewApiKey(organizationId);
+          } else if (keyChoice === '__skip__') {
+            apiKey = null; // Will skip writing API key to .env.local
+            console.log(chalk.green(`  ✅ Skipping API key setup - using existing configuration\n`));
           } else {
             // User selected existing key - we only have the preview, not the full key
             // They need to use the key they have stored or get it from dashboard

@@ -27,7 +27,8 @@ class EnvGenerator {
     const envVars = {
       ...existingEnv,
       // Core API configuration
-      L4YERCAK3_API_KEY: apiKey,
+      // If apiKey is null (user skipped), preserve existing value
+      L4YERCAK3_API_KEY: apiKey || existingEnv.L4YERCAK3_API_KEY || 'your_api_key_here',
       L4YERCAK3_BACKEND_URL: backendUrl,
       L4YERCAK3_ORGANIZATION_ID: organizationId,
       NEXT_PUBLIC_L4YERCAK3_BACKEND_URL: backendUrl,
