@@ -3,6 +3,8 @@
  * Main command for setting up boilerplate integration
  */
 
+const fs = require('fs');
+const path = require('path');
 const configManager = require('../config/config-manager');
 const backendClient = require('../api/backend-client');
 const projectDetector = require('../detectors');
@@ -10,7 +12,6 @@ const fileGenerator = require('../generators');
 const { generateProjectPathHash } = require('../utils/file-utils');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
-const path = require('path');
 const pkg = require('../../package.json');
 
 /**
@@ -226,7 +227,7 @@ async function handleSpread() {
 
       if (existingEnvKey) {
         // Found existing API key in .env.local
-        const keyPreview = existingEnvKey.substring(0, 12) + '...';
+        const keyPreview = `${existingEnvKey.substring(0, 12)}...`;
         console.log(chalk.green(`  ✅ Found existing API key in .env.local (${keyPreview})\n`));
 
         const { useExisting } = await inquirer.prompt([
