@@ -264,23 +264,40 @@ async function handleSpread() {
             const selectedKey = activeKeys.find(k => k.id === keyChoice);
             console.log(chalk.yellow(`\n  ⚠️  For security, we can't retrieve the full API key.`));
             console.log(chalk.gray(`  You selected: ${selectedKey.name} (${selectedKey.keyPreview})`));
-            console.log(chalk.gray(`  If you have this key stored, enter it below.`));
-            console.log(chalk.gray(`  Otherwise, generate a new key or find it at:`));
-            console.log(chalk.gray(`  https://app.l4yercak3.com?openWindow=integrations&panel=api-keys\n`));
+            console.log(chalk.gray(`  If you have this key stored, enter it below.\n`));
 
-            const { existingKey } = await inquirer.prompt([
+            const { keyAction } = await inquirer.prompt([
               {
-                type: 'input',
-                name: 'existingKey',
-                message: 'Enter your API key (or press Enter to generate new):',
+                type: 'list',
+                name: 'keyAction',
+                message: 'What would you like to do?',
+                choices: [
+                  { name: 'Enter my API key', value: 'enter' },
+                  { name: 'Generate a new API key', value: 'generate' },
+                  { name: 'Skip - I already have it in .env.local', value: 'skip' },
+                ],
               },
             ]);
 
-            if (existingKey.trim()) {
-              apiKey = existingKey.trim();
-              console.log(chalk.green(`  ✅ Using existing API key\n`));
-            } else {
+            if (keyAction === 'enter') {
+              const { existingKey } = await inquirer.prompt([
+                {
+                  type: 'input',
+                  name: 'existingKey',
+                  message: 'Enter your API key:',
+                },
+              ]);
+              if (existingKey.trim()) {
+                apiKey = existingKey.trim();
+                console.log(chalk.green(`  ✅ Using existing API key\n`));
+              } else {
+                apiKey = await generateNewApiKey(organizationId);
+              }
+            } else if (keyAction === 'generate') {
               apiKey = await generateNewApiKey(organizationId);
+            } else {
+              apiKey = null; // Will skip writing API key to .env.local
+              console.log(chalk.green(`  ✅ Skipping API key setup - using existing configuration\n`));
             }
           }
         } else {
