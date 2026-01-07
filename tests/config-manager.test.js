@@ -36,7 +36,7 @@ describe('ConfigManager', () => {
         session: null,
         organizations: [],
         settings: {
-          backendUrl: 'https://app.l4yercak3.com',
+          backendUrl: 'https://aromatic-akita-723.convex.site',
         },
       });
     });
@@ -204,7 +204,7 @@ describe('ConfigManager', () => {
 
       const url = ConfigManager.getBackendUrl();
 
-      expect(url).toBe('https://app.l4yercak3.com');
+      expect(url).toBe('https://aromatic-akita-723.convex.site');
     });
 
     it('returns configured URL from settings', () => {

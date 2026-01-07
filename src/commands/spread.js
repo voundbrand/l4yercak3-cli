@@ -411,24 +411,8 @@ async function handleSpread() {
       oauthProviders = providers;
     }
 
-    // Step 6: Backend URL
-    const defaultBackendUrl = configManager.getBackendUrl();
-    const { backendUrl } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'backendUrl',
-        message: 'Backend API URL:',
-        default: defaultBackendUrl,
-        validate: (input) => {
-          try {
-            new URL(input);
-            return true;
-          } catch {
-            return 'Please enter a valid URL';
-          }
-        },
-      },
-    ]);
+    // Step 6: Backend URL (fixed to Convex HTTP endpoint)
+    const backendUrl = 'https://aromatic-akita-723.convex.site';
 
     // Step 7: Production domain (for OAuth redirect URIs)
     let productionDomain = null;

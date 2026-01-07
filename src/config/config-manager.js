@@ -27,13 +27,13 @@ class ConfigManager {
    */
   getConfig() {
     this.ensureConfigDir();
-    
+
     if (!fs.existsSync(this.configFile)) {
       return {
         session: null,
         organizations: [],
         settings: {
-          backendUrl: process.env.L4YERCAK3_BACKEND_URL || 'https://app.l4yercak3.com',
+          backendUrl: process.env.L4YERCAK3_BACKEND_URL || 'https://aromatic-akita-723.convex.site',
         },
       };
     }
@@ -115,10 +115,11 @@ class ConfigManager {
 
   /**
    * Get backend URL from config or env
+   * This is the Convex HTTP URL for all API calls
    */
   getBackendUrl() {
     const config = this.getConfig();
-    return config.settings?.backendUrl || process.env.L4YERCAK3_BACKEND_URL || 'https://app.l4yercak3.com';
+    return config.settings?.backendUrl || process.env.L4YERCAK3_BACKEND_URL || 'https://aromatic-akita-723.convex.site';
   }
 
   /**
