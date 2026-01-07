@@ -15,7 +15,7 @@ configManager.getBackendUrl.mockReturnValue('https://backend.test.com');
 const BackendClient = require('../src/api/backend-client');
 
 // API Base URL for all CLI endpoints (Convex HTTP)
-const API_BASE_URL = 'https://aromatic-akita-723.convex.site';
+const API_BASE_URL = 'https://agreeable-lion-828.convex.site';
 // App URL only for browser login
 const APP_URL = 'https://app.l4yercak3.com';
 
@@ -461,7 +461,7 @@ describe('BackendClient', () => {
 
       // Should use Convex URL, not main backend
       expect(fetch).toHaveBeenCalledWith(
-        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/by-path?organizationId=org-123&hash=hash123',
+        'https://agreeable-lion-828.convex.site/api/v1/cli/applications/by-path?organizationId=org-123&hash=hash123',
         expect.objectContaining({ method: 'GET' })
       );
       expect(result.found).toBe(true);
@@ -522,7 +522,7 @@ describe('BackendClient', () => {
 
       // Should use Convex URL, not main backend
       expect(fetch).toHaveBeenCalledWith(
-        'https://aromatic-akita-723.convex.site/api/v1/cli/applications',
+        'https://agreeable-lion-828.convex.site/api/v1/cli/applications',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(registrationData),
@@ -552,7 +552,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.updateApplication('app-123', updates);
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/app-123',
+        'https://agreeable-lion-828.convex.site/api/v1/cli/applications/app-123',
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify(updates),
@@ -577,7 +577,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.getApplication('app-123');
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/app-123',
+        'https://agreeable-lion-828.convex.site/api/v1/cli/applications/app-123',
         expect.objectContaining({ method: 'GET' })
       );
       expect(result.id).toBe('app-123');
@@ -601,7 +601,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.listApplications('org-123');
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://aromatic-akita-723.convex.site/api/v1/cli/applications?organizationId=org-123',
+        'https://agreeable-lion-828.convex.site/api/v1/cli/applications?organizationId=org-123',
         expect.objectContaining({ method: 'GET' })
       );
       expect(result.applications).toHaveLength(2);
@@ -627,7 +627,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.syncApplication('app-123', syncData);
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/app-123/sync',
+        'https://agreeable-lion-828.convex.site/api/v1/cli/applications/app-123/sync',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(syncData),

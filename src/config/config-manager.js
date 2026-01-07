@@ -33,7 +33,7 @@ class ConfigManager {
         session: null,
         organizations: [],
         settings: {
-          backendUrl: process.env.L4YERCAK3_BACKEND_URL || 'https://aromatic-akita-723.convex.site',
+          backendUrl: process.env.L4YERCAK3_BACKEND_URL || 'https://agreeable-lion-828.convex.site',
         },
       };
     }
@@ -119,7 +119,7 @@ class ConfigManager {
    */
   getBackendUrl() {
     const config = this.getConfig();
-    return config.settings?.backendUrl || process.env.L4YERCAK3_BACKEND_URL || 'https://aromatic-akita-723.convex.site';
+    return config.settings?.backendUrl || process.env.L4YERCAK3_BACKEND_URL || 'https://agreeable-lion-828.convex.site';
   }
 
   /**

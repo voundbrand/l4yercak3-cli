@@ -412,7 +412,7 @@ async function handleSpread() {
     }
 
     // Step 6: Backend URL (fixed to Convex HTTP endpoint)
-    const backendUrl = 'https://aromatic-akita-723.convex.site';
+    const backendUrl = 'https://agreeable-lion-828.convex.site';
 
     // Step 7: Production domain (for OAuth redirect URIs)
     let productionDomain = null;

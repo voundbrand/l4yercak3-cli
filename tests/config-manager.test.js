@@ -36,7 +36,7 @@ describe('ConfigManager', () => {
         session: null,
         organizations: [],
         settings: {
-          backendUrl: 'https://aromatic-akita-723.convex.site',
+          backendUrl: 'https://agreeable-lion-828.convex.site',
         },
       });
     });
@@ -204,7 +204,7 @@ describe('ConfigManager', () => {
 
       const url = ConfigManager.getBackendUrl();
 
-      expect(url).toBe('https://aromatic-akita-723.convex.site');
+      expect(url).toBe('https://agreeable-lion-828.convex.site');
     });
 
     it('returns configured URL from settings', () => {

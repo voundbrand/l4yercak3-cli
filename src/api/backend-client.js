@@ -7,8 +7,8 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const configManager = require('../config/config-manager');
 
-// API Base URL - All CLI API endpoints go through Convex HTTP
-const API_BASE_URL = 'https://aromatic-akita-723.convex.site';
+// API Base URL - All CLI API endpoints go through Convex HTTP (Production)
+const API_BASE_URL = 'https://agreeable-lion-828.convex.site';
 
 // App URL - Only used for browser login page (Next.js serves the OAuth UI)
 const APP_URL = 'https://app.l4yercak3.com';
