@@ -167,6 +167,68 @@ class BackendClient {
       name,
     });
   }
+
+  // ============================================
+  // Connected Applications API
+  // ============================================
+
+  /**
+   * Check if an application already exists for this project path
+   * @param {string} organizationId - The organization ID
+   * @param {string} projectPathHash - SHA256 hash of the project path
+   * @returns {Promise<{found: boolean, application?: object}>}
+   */
+  async checkExistingApplication(organizationId, projectPathHash) {
+    try {
+      return await this.request(
+        'GET',
+        `/api/v1/cli/applications/by-path?organizationId=${organizationId}&hash=${projectPathHash}`
+      );
+    } catch (error) {
+      // If 404, no existing app found
+      if (error.status === 404) {
+        return { found: false };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Register a new connected application
+   * @param {object} data - Application registration data
+   * @returns {Promise<{applicationId: string, apiKey?: object, backendUrl: string}>}
+   */
+  async registerApplication(data) {
+    return await this.request('POST', '/api/v1/cli/applications', data);
+  }
+
+  /**
+   * Update an existing connected application
+   * @param {string} applicationId - The application ID
+   * @param {object} updates - Fields to update
+   * @returns {Promise<object>}
+   */
+  async updateApplication(applicationId, updates) {
+    return await this.request('PATCH', `/api/v1/cli/applications/${applicationId}`, updates);
+  }
+
+  /**
+   * Get application details
+   * @param {string} applicationId - The application ID
+   * @returns {Promise<object>}
+   */
+  async getApplication(applicationId) {
+    return await this.request('GET', `/api/v1/cli/applications/${applicationId}`);
+  }
+
+  /**
+   * List all connected applications for an organization
+   * @param {string} organizationId - The organization ID
+   * @returns {Promise<{applications: object[]}>}
+   */
+  async listApplications(organizationId) {
+    return await this.request('GET', `/api/v1/cli/applications?organizationId=${organizationId}`);
+  }
 }
 
 module.exports = new BackendClient();

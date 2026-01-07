@@ -378,4 +378,171 @@ describe('BackendClient', () => {
       expect(result.name).toBe('New Org');
     });
   });
+
+  // ============================================
+  // Connected Applications API Tests
+  // ============================================
+
+  describe('checkExistingApplication', () => {
+    it('returns found=true when application exists', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          found: true,
+          application: {
+            id: 'app-123',
+            name: 'My App',
+          },
+        }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await BackendClient.checkExistingApplication('org-123', 'hash123');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/cli/applications/by-path?organizationId=org-123&hash=hash123'),
+        expect.objectContaining({ method: 'GET' })
+      );
+      expect(result.found).toBe(true);
+      expect(result.application.id).toBe('app-123');
+    });
+
+    it('returns found=false when 404', async () => {
+      const mockResponse = {
+        ok: false,
+        status: 404,
+        json: jest.fn().mockResolvedValue({ error: 'Not found' }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await BackendClient.checkExistingApplication('org-123', 'hash456');
+
+      expect(result.found).toBe(false);
+    });
+
+    it('throws error on non-404 errors', async () => {
+      const mockResponse = {
+        ok: false,
+        status: 500,
+        json: jest.fn().mockResolvedValue({ message: 'Server error' }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      await expect(BackendClient.checkExistingApplication('org-123', 'hash789'))
+        .rejects.toThrow('Server error');
+    });
+  });
+
+  describe('registerApplication', () => {
+    it('registers new application', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          applicationId: 'app-new-123',
+          backendUrl: 'https://api.l4yercak3.com',
+        }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const registrationData = {
+        organizationId: 'org-123',
+        name: 'My New App',
+        source: {
+          type: 'cli',
+          projectPathHash: 'hash123',
+          framework: 'nextjs',
+        },
+        connection: {
+          features: ['crm', 'events'],
+        },
+      };
+
+      const result = await BackendClient.registerApplication(registrationData);
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/cli/applications'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify(registrationData),
+        })
+      );
+      expect(result.applicationId).toBe('app-new-123');
+    });
+  });
+
+  describe('updateApplication', () => {
+    it('updates existing application', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          success: true,
+          applicationId: 'app-123',
+        }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const updates = {
+        connection: {
+          features: ['crm', 'events', 'invoicing'],
+        },
+      };
+
+      const result = await BackendClient.updateApplication('app-123', updates);
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/cli/applications/app-123'),
+        expect.objectContaining({
+          method: 'PATCH',
+          body: JSON.stringify(updates),
+        })
+      );
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('getApplication', () => {
+    it('fetches application details', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          id: 'app-123',
+          name: 'My App',
+          status: 'active',
+        }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await BackendClient.getApplication('app-123');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/cli/applications/app-123'),
+        expect.objectContaining({ method: 'GET' })
+      );
+      expect(result.id).toBe('app-123');
+      expect(result.status).toBe('active');
+    });
+  });
+
+  describe('listApplications', () => {
+    it('lists applications for organization', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          applications: [
+            { id: 'app-1', name: 'App One' },
+            { id: 'app-2', name: 'App Two' },
+          ],
+        }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await BackendClient.listApplications('org-123');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/cli/applications?organizationId=org-123'),
+        expect.objectContaining({ method: 'GET' })
+      );
+      expect(result.applications).toHaveLength(2);
+    });
+  });
 });

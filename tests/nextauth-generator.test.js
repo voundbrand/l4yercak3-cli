@@ -6,8 +6,17 @@ const fs = require('fs');
 const path = require('path');
 
 jest.mock('fs');
+jest.mock('../src/utils/file-utils', () => ({
+  checkFileOverwrite: jest.fn().mockResolvedValue('write'),
+  writeFileWithBackup: jest.fn((filePath, content, action) => {
+    if (action === 'skip') return null;
+    return filePath;
+  }),
+  ensureDir: jest.fn(),
+}));
 
 const NextAuthGenerator = require('../src/generators/nextauth-generator');
+const { checkFileOverwrite, writeFileWithBackup, ensureDir } = require('../src/utils/file-utils');
 
 describe('NextAuthGenerator', () => {
   const mockProjectPath = '/test/project';
@@ -17,10 +26,11 @@ describe('NextAuthGenerator', () => {
     fs.existsSync.mockReturnValue(false);
     fs.mkdirSync.mockReturnValue(undefined);
     fs.writeFileSync.mockReturnValue(undefined);
+    checkFileOverwrite.mockResolvedValue('write');
   });
 
   describe('generate', () => {
-    it('creates route.js in app/api/auth/[...nextauth] for App Router', () => {
+    it('creates route.js in app/api/auth/[...nextauth] for App Router', async () => {
       const options = {
         projectPath: mockProjectPath,
         backendUrl: 'https://backend.test.com',
@@ -29,22 +39,20 @@ describe('NextAuthGenerator', () => {
         isTypeScript: false,
       };
 
-      const result = NextAuthGenerator.generate(options);
+      const result = await NextAuthGenerator.generate(options);
 
       expect(result).toBe(
         path.join(mockProjectPath, 'app', 'api', 'auth', '[...nextauth]', 'route.js')
       );
-      expect(fs.mkdirSync).toHaveBeenCalledWith(
-        path.join(mockProjectPath, 'app', 'api', 'auth'),
-        { recursive: true }
+      expect(ensureDir).toHaveBeenCalledWith(
+        path.join(mockProjectPath, 'app', 'api', 'auth')
       );
-      expect(fs.mkdirSync).toHaveBeenCalledWith(
-        path.join(mockProjectPath, 'app', 'api', 'auth', '[...nextauth]'),
-        { recursive: true }
+      expect(ensureDir).toHaveBeenCalledWith(
+        path.join(mockProjectPath, 'app', 'api', 'auth', '[...nextauth]')
       );
     });
 
-    it('creates [...nextauth].ts in pages/api/auth for Pages Router', () => {
+    it('creates [...nextauth].ts in pages/api/auth for Pages Router', async () => {
       const options = {
         projectPath: mockProjectPath,
         backendUrl: 'https://backend.test.com',
@@ -53,14 +61,30 @@ describe('NextAuthGenerator', () => {
         isTypeScript: true,
       };
 
-      const result = NextAuthGenerator.generate(options);
+      const result = await NextAuthGenerator.generate(options);
 
       expect(result).toBe(
         path.join(mockProjectPath, 'pages', 'api', 'auth', '[...nextauth].ts')
       );
     });
 
-    it('does not create [...nextauth] dir for Pages Router', () => {
+    it('returns null when user skips overwrite', async () => {
+      checkFileOverwrite.mockResolvedValue('skip');
+
+      const options = {
+        projectPath: mockProjectPath,
+        backendUrl: 'https://backend.test.com',
+        oauthProviders: ['google'],
+        routerType: 'app',
+        isTypeScript: false,
+      };
+
+      const result = await NextAuthGenerator.generate(options);
+
+      expect(result).toBeNull();
+    });
+
+    it('does not create [...nextauth] dir for Pages Router', async () => {
       const options = {
         projectPath: mockProjectPath,
         backendUrl: 'https://backend.test.com',
@@ -69,11 +93,11 @@ describe('NextAuthGenerator', () => {
         isTypeScript: false,
       };
 
-      NextAuthGenerator.generate(options);
+      await NextAuthGenerator.generate(options);
 
       // Should only create pages/api/auth, not [...nextauth] dir
-      const mkdirCalls = fs.mkdirSync.mock.calls.map((c) => c[0]);
-      expect(mkdirCalls).not.toContain(
+      const ensureDirCalls = ensureDir.mock.calls.map((c) => c[0]);
+      expect(ensureDirCalls).not.toContain(
         path.join(mockProjectPath, 'pages', 'api', 'auth', '[...nextauth]')
       );
     });

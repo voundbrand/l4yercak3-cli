@@ -7,9 +7,11 @@ const configManager = require('../config/config-manager');
 const backendClient = require('../api/backend-client');
 const projectDetector = require('../detectors');
 const fileGenerator = require('../generators');
+const { generateProjectPathHash } = require('../utils/file-utils');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const path = require('path');
+const pkg = require('../../package.json');
 
 /**
  * Helper function to create an organization
@@ -378,11 +380,15 @@ async function handleSpread() {
         name: 'features',
         message: 'Select features to enable:',
         choices: [
-          { name: 'CRM (Contacts)', value: 'crm', checked: true },
-          { name: 'Projects', value: 'projects', checked: true },
-          { name: 'Invoices', value: 'invoices', checked: true },
+          { name: 'CRM (contacts, organizations)', value: 'crm', checked: true },
+          { name: 'Events (event management, registrations)', value: 'events', checked: false },
+          { name: 'Products (product catalog)', value: 'products', checked: false },
+          { name: 'Checkout (payment processing)', value: 'checkout', checked: false },
+          { name: 'Tickets (ticket generation)', value: 'tickets', checked: false },
+          { name: 'Invoicing (invoice creation)', value: 'invoicing', checked: false },
+          { name: 'Forms (dynamic forms)', value: 'forms', checked: false },
+          { name: 'Projects (project management)', value: 'projects', checked: false },
           { name: 'OAuth Authentication', value: 'oauth', checked: false },
-          { name: 'Stripe Integration', value: 'stripe', checked: false },
         ],
       },
     ]);
@@ -425,17 +431,34 @@ async function handleSpread() {
     ]);
 
     // Step 7: Production domain (for OAuth redirect URIs)
-    let productionDomain = 'your-domain.com';
+    let productionDomain = null;
     if (features.includes('oauth')) {
-      const { domain } = await inquirer.prompt([
+      console.log(chalk.gray('\n  ℹ️  The following settings are written to .env.local for local development.'));
+      console.log(chalk.gray('     For production, set NEXTAUTH_URL in your hosting platform (e.g., Vercel).\n'));
+
+      const { configureNow } = await inquirer.prompt([
         {
-          type: 'input',
-          name: 'domain',
-          message: 'Production domain (for OAuth redirect URIs):',
-          default: detection.github.repo ? `${detection.github.repo}.vercel.app` : 'your-domain.com',
+          type: 'confirm',
+          name: 'configureNow',
+          message: 'Configure production domain now? (You can skip and do this later)',
+          default: true,
         },
       ]);
-      productionDomain = domain;
+
+      if (configureNow) {
+        const { domain } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'domain',
+            message: 'Production domain (for OAuth redirect URIs):',
+            default: detection.github.repo ? `${detection.github.repo}.vercel.app` : 'your-domain.com',
+          },
+        ]);
+        productionDomain = domain;
+      } else {
+        console.log(chalk.gray('  Skipping production domain configuration.'));
+        console.log(chalk.gray('  Set NEXTAUTH_URL in your hosting platform when deploying.\n'));
+      }
     }
 
     // Step 8: Generate files
@@ -481,10 +504,103 @@ async function handleSpread() {
       console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.gitignore)} (updated)`));
     }
 
+    // Step 9: Register application with backend
+    console.log(chalk.cyan('\n  🔗 Registering with L4YERCAK3...\n'));
+
+    const projectPathHash = generateProjectPathHash(detection.projectPath);
+    let applicationId = null;
+    let isUpdate = false;
+
+    try {
+      // Check if application already exists for this project
+      const existingApp = await backendClient.checkExistingApplication(organizationId, projectPathHash);
+
+      if (existingApp.found && existingApp.application) {
+        // Application already registered
+        console.log(chalk.yellow(`  ⚠️  This project is already registered as "${existingApp.application.name}"`));
+
+        const { updateAction } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'updateAction',
+            message: 'What would you like to do?',
+            choices: [
+              { name: 'Update existing registration', value: 'update' },
+              { name: 'Skip registration (keep existing)', value: 'skip' },
+            ],
+          },
+        ]);
+
+        if (updateAction === 'update') {
+          // Update existing application
+          const updateData = {
+            connection: {
+              features,
+              hasFrontendDatabase: !!detection.framework.metadata?.hasPrisma,
+              frontendDatabaseType: detection.framework.metadata?.hasPrisma ? 'prisma' : undefined,
+            },
+            deployment: {
+              productionUrl: productionDomain ? `https://${productionDomain}` : undefined,
+              githubRepo: detection.github.isGitHub ? `${detection.github.owner}/${detection.github.repo}` : undefined,
+            },
+          };
+
+          await backendClient.updateApplication(existingApp.application.id, updateData);
+          applicationId = existingApp.application.id;
+          isUpdate = true;
+          console.log(chalk.green(`  ✅ Application registration updated\n`));
+        } else {
+          applicationId = existingApp.application.id;
+          console.log(chalk.gray(`  Skipped registration update\n`));
+        }
+      } else {
+        // Register new application
+        const registrationData = {
+          organizationId,
+          name: detection.github.repo || organizationName || 'My Application',
+          description: `Connected via CLI from ${detection.framework.type || 'unknown'} project`,
+          source: {
+            type: 'cli',
+            projectPathHash,
+            cliVersion: pkg.version,
+            framework: detection.framework.type || 'unknown',
+            frameworkVersion: detection.framework.metadata?.version,
+            hasTypeScript: detection.framework.metadata?.hasTypeScript || false,
+            routerType: detection.framework.metadata?.routerType,
+          },
+          connection: {
+            features,
+            hasFrontendDatabase: !!detection.framework.metadata?.hasPrisma,
+            frontendDatabaseType: detection.framework.metadata?.hasPrisma ? 'prisma' : undefined,
+          },
+          deployment: {
+            productionUrl: productionDomain ? `https://${productionDomain}` : undefined,
+            githubRepo: detection.github.isGitHub ? `${detection.github.owner}/${detection.github.repo}` : undefined,
+            githubBranch: detection.github.branch || 'main',
+          },
+        };
+
+        const registrationResult = await backendClient.registerApplication(registrationData);
+        applicationId = registrationResult.applicationId;
+        console.log(chalk.green(`  ✅ Application registered with L4YERCAK3\n`));
+
+        // If backend returned a new API key, use it
+        if (registrationResult.apiKey && registrationResult.apiKey.key) {
+          console.log(chalk.gray(`     API key generated: ${registrationResult.apiKey.prefix}`));
+        }
+      }
+    } catch (regError) {
+      // Registration failed but files were generated - warn but don't fail
+      console.log(chalk.yellow(`  ⚠️  Could not register with backend: ${regError.message}`));
+      console.log(chalk.gray('     Your files were generated. Registration can be retried later.\n'));
+    }
+
     // Save project configuration
     const projectConfig = {
       organizationId,
       organizationName,
+      applicationId,
+      projectPathHash,
       apiKey: `${apiKey.substring(0, 10)}...`, // Store partial key for reference only
       backendUrl,
       features,
@@ -492,6 +608,7 @@ async function handleSpread() {
       productionDomain,
       frameworkType: detection.framework.type,
       createdAt: Date.now(),
+      updatedAt: isUpdate ? Date.now() : undefined,
     };
 
     configManager.saveProjectConfig(detection.projectPath, projectConfig);

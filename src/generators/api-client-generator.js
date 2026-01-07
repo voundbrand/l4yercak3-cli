@@ -5,12 +5,15 @@
 
 const fs = require('fs');
 const path = require('path');
+const { checkFileOverwrite, writeFileWithBackup, ensureDir } = require('../utils/file-utils');
 
 class ApiClientGenerator {
   /**
    * Generate API client file
+   * @param {Object} options - Generation options
+   * @returns {Promise<string|null>} - Path to generated file or null if skipped
    */
-  generate(options) {
+  async generate(options) {
     const {
       projectPath,
       apiKey,
@@ -25,12 +28,17 @@ class ApiClientGenerator {
       : path.join(projectPath, 'lib');
 
     // Ensure lib directory exists
-    if (!fs.existsSync(libDir)) {
-      fs.mkdirSync(libDir, { recursive: true });
-    }
+    ensureDir(libDir);
 
     const extension = isTypeScript ? 'ts' : 'js';
     const outputPath = path.join(libDir, `api-client.${extension}`);
+
+    // Check if file exists and get action
+    const action = await checkFileOverwrite(outputPath);
+
+    if (action === 'skip') {
+      return null;
+    }
 
     // Generate API client code
     const code = this.generateCode({
@@ -40,8 +48,7 @@ class ApiClientGenerator {
       isTypeScript,
     });
 
-    fs.writeFileSync(outputPath, code, 'utf8');
-    return outputPath;
+    return writeFileWithBackup(outputPath, code, action);
   }
 
   /**

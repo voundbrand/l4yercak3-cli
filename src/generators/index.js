@@ -22,17 +22,17 @@ class FileGenerator {
       gitignore: null,
     };
 
-    // Generate API client
+    // Generate API client (async - checks for file overwrites)
     if (options.features && options.features.length > 0) {
-      results.apiClient = apiClientGenerator.generate(options);
+      results.apiClient = await apiClientGenerator.generate(options);
     }
 
     // Generate environment file
     results.envFile = envGenerator.generate(options);
 
-    // Generate NextAuth.js config if OAuth is enabled
+    // Generate NextAuth.js config if OAuth is enabled (async - checks for file overwrites)
     if (options.features && options.features.includes('oauth') && options.oauthProviders) {
-      results.nextauth = nextauthGenerator.generate(options);
+      results.nextauth = await nextauthGenerator.generate(options);
     }
 
     // Generate OAuth guide if OAuth is enabled

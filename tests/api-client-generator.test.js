@@ -6,8 +6,17 @@ const fs = require('fs');
 const path = require('path');
 
 jest.mock('fs');
+jest.mock('../src/utils/file-utils', () => ({
+  checkFileOverwrite: jest.fn().mockResolvedValue('write'),
+  writeFileWithBackup: jest.fn((filePath, content, action) => {
+    if (action === 'skip') return null;
+    return filePath;
+  }),
+  ensureDir: jest.fn(),
+}));
 
 const ApiClientGenerator = require('../src/generators/api-client-generator');
+const { checkFileOverwrite, writeFileWithBackup, ensureDir } = require('../src/utils/file-utils');
 
 describe('ApiClientGenerator', () => {
   const mockProjectPath = '/test/project';
@@ -17,10 +26,11 @@ describe('ApiClientGenerator', () => {
     fs.existsSync.mockReturnValue(false);
     fs.mkdirSync.mockReturnValue(undefined);
     fs.writeFileSync.mockReturnValue(undefined);
+    checkFileOverwrite.mockResolvedValue('write');
   });
 
   describe('generate', () => {
-    it('creates api-client.js in lib folder when no src exists', () => {
+    it('creates api-client.js in lib folder when no src exists', async () => {
       fs.existsSync.mockReturnValue(false);
 
       const options = {
@@ -31,17 +41,14 @@ describe('ApiClientGenerator', () => {
         isTypeScript: false,
       };
 
-      const result = ApiClientGenerator.generate(options);
+      const result = await ApiClientGenerator.generate(options);
 
       expect(result).toBe(path.join(mockProjectPath, 'lib', 'api-client.js'));
-      expect(fs.mkdirSync).toHaveBeenCalledWith(
-        path.join(mockProjectPath, 'lib'),
-        { recursive: true }
-      );
-      expect(fs.writeFileSync).toHaveBeenCalled();
+      expect(ensureDir).toHaveBeenCalledWith(path.join(mockProjectPath, 'lib'));
+      expect(writeFileWithBackup).toHaveBeenCalled();
     });
 
-    it('creates api-client.ts in src/lib folder when src exists', () => {
+    it('creates api-client.ts in src/lib folder when src exists', async () => {
       fs.existsSync.mockImplementation((p) =>
         p === path.join(mockProjectPath, 'src')
       );
@@ -54,13 +61,13 @@ describe('ApiClientGenerator', () => {
         isTypeScript: true,
       };
 
-      const result = ApiClientGenerator.generate(options);
+      const result = await ApiClientGenerator.generate(options);
 
       expect(result).toBe(path.join(mockProjectPath, 'src', 'lib', 'api-client.ts'));
     });
 
-    it('does not create lib dir if it exists', () => {
-      fs.existsSync.mockReturnValue(true);
+    it('returns null when user skips overwrite', async () => {
+      checkFileOverwrite.mockResolvedValue('skip');
 
       const options = {
         projectPath: mockProjectPath,
@@ -70,9 +77,9 @@ describe('ApiClientGenerator', () => {
         isTypeScript: false,
       };
 
-      ApiClientGenerator.generate(options);
+      const result = await ApiClientGenerator.generate(options);
 
-      expect(fs.mkdirSync).not.toHaveBeenCalled();
+      expect(result).toBeNull();
     });
   });
 

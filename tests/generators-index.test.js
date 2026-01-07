@@ -5,6 +5,14 @@
 const fs = require('fs');
 
 jest.mock('fs');
+jest.mock('../src/utils/file-utils', () => ({
+  checkFileOverwrite: jest.fn().mockResolvedValue('write'),
+  writeFileWithBackup: jest.fn((filePath, content, action) => {
+    if (action === 'skip') return null;
+    return filePath;
+  }),
+  ensureDir: jest.fn(),
+}));
 
 const FileGenerator = require('../src/generators/index');
 

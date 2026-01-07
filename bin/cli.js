@@ -50,6 +50,12 @@ program
   .description(spreadCommand.description)
   .action(spreadCommand.handler);
 
+// Add 'init' as an alias for 'spread'
+program
+  .command('init')
+  .description('Initialize L4YERCAK3 in your project (alias for spread)')
+  .action(spreadCommand.handler);
+
 program
   .command(apiKeysCommand.command)
   .description(apiKeysCommand.description)

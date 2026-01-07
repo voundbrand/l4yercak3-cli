@@ -5,12 +5,15 @@
 
 const fs = require('fs');
 const path = require('path');
+const { checkFileOverwrite, writeFileWithBackup, ensureDir } = require('../utils/file-utils');
 
 class NextAuthGenerator {
   /**
    * Generate NextAuth.js configuration
+   * @param {Object} options - Generation options
+   * @returns {Promise<string|null>} - Path to generated file or null if skipped
    */
-  generate(options) {
+  async generate(options) {
     const {
       projectPath,
       backendUrl,
@@ -25,9 +28,7 @@ class NextAuthGenerator {
       : path.join(projectPath, 'pages', 'api', 'auth');
 
     // Ensure directory exists
-    if (!fs.existsSync(apiDir)) {
-      fs.mkdirSync(apiDir, { recursive: true });
-    }
+    ensureDir(apiDir);
 
     const extension = isTypeScript ? 'ts' : 'js';
     const routePath = routerType === 'app'
@@ -37,9 +38,14 @@ class NextAuthGenerator {
     // Ensure [...nextauth] directory exists for App Router
     if (routerType === 'app') {
       const nextauthDir = path.join(apiDir, '[...nextauth]');
-      if (!fs.existsSync(nextauthDir)) {
-        fs.mkdirSync(nextauthDir, { recursive: true });
-      }
+      ensureDir(nextauthDir);
+    }
+
+    // Check if file exists and get action
+    const action = await checkFileOverwrite(routePath);
+
+    if (action === 'skip') {
+      return null;
     }
 
     // Generate NextAuth configuration
@@ -50,8 +56,7 @@ class NextAuthGenerator {
       isTypeScript,
     });
 
-    fs.writeFileSync(routePath, code, 'utf8');
-    return routePath;
+    return writeFileWithBackup(routePath, code, action);
   }
 
   /**
