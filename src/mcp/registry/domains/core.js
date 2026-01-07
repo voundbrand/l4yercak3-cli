@@ -195,8 +195,7 @@ Use this when the user needs to login but hasn't yet.`,
         properties: {},
       },
       requiresAuth: false,
-      handler: async () => {
-        return {
+      handler: async () => ({
           instructions: [
             '1. Open a terminal in this project directory',
             '2. Run: l4yercak3 login',
@@ -209,8 +208,7 @@ Use this when the user needs to login but hasn't yet.`,
             '2. Then run: l4yercak3 login',
           ],
           documentation: 'https://docs.l4yercak3.com/cli/authentication',
-        };
-      },
+        }),
     },
 
     // ========================================

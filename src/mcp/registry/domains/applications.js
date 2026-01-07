@@ -464,11 +464,11 @@ Looks at database schemas, types, and common patterns.`,
         },
       },
       requiresAuth: true,
-      handler: async (params, authContext) => {
+      handler: async (params, authContext) => 
         // This tool provides suggestions based on common patterns
         // In a real implementation, it would analyze actual project files
 
-        return {
+         ({
           suggestions: [
             {
               localModel: 'User',
@@ -509,8 +509,8 @@ Looks at database schemas, types, and common patterns.`,
             'Use l4yercak3_add_model_mapping to add mappings you want',
             'Customize field mappings as needed for your schema',
           ],
-        };
-      },
+        })
+      ,
     },
   ],
 };
