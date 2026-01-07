@@ -57,6 +57,8 @@ describe('Login Command', () => {
 
     configManager.getSession.mockReturnValue(null);
     backendClient.getLoginUrl.mockReturnValue('https://backend.test.com/auth/cli-login');
+    // Mock validateSession to return valid result by default
+    backendClient.validateSession.mockResolvedValue({ valid: true, userId: 'user-123' });
   });
 
   afterEach(() => {

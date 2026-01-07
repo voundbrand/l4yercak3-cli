@@ -121,7 +121,7 @@ function startCallbackServer(expectedState) {
  */
 async function handleLogin() {
   try {
-    // Check if already logged in
+    // Check if already logged in (local check)
     if (configManager.isLoggedIn()) {
       const session = configManager.getSession();
 
@@ -129,15 +129,26 @@ async function handleLogin() {
       console.log('');
       showLogo(false);
 
-      console.log(chalk.green('  ✅ You are already logged in'));
-      if (session.email) {
-        console.log(chalk.gray(`  Email: ${session.email}`));
-      }
-      console.log(chalk.gray(`  Session expires: ${new Date(session.expiresAt).toLocaleString()}\n`));
+      // Validate session with backend to ensure it's actually valid
+      console.log(chalk.gray('  Validating session with backend...'));
+      const validationResult = await backendClient.validateSession();
 
-      // Still offer the setup wizard
-      await promptSetupWizard();
-      return;
+      if (validationResult) {
+        console.log(chalk.green('  ✅ You are already logged in'));
+        if (session.email) {
+          console.log(chalk.gray(`  Email: ${session.email}`));
+        }
+        console.log(chalk.gray(`  Session expires: ${new Date(session.expiresAt).toLocaleString()}\n`));
+
+        // Still offer the setup wizard
+        await promptSetupWizard();
+        return;
+      } else {
+        // Session is invalid on backend - clear it and proceed to login
+        console.log(chalk.yellow('  ⚠️  Your session has expired or is invalid'));
+        console.log(chalk.gray('  Starting fresh login...\n'));
+        configManager.clearSession();
+      }
     }
 
     console.log(chalk.cyan('  🔐 Opening browser for authentication...\n'));
