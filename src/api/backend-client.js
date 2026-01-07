@@ -7,9 +7,14 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 const configManager = require('../config/config-manager');
 
+// Convex HTTP endpoint for CLI application management
+// These endpoints are Convex HTTP actions, not Next.js API routes
+const CONVEX_HTTP_URL = 'https://aromatic-akita-723.convex.site';
+
 class BackendClient {
   constructor() {
     this.baseUrl = configManager.getBackendUrl();
+    this.convexUrl = CONVEX_HTTP_URL;
   }
 
   /**
@@ -36,11 +41,11 @@ class BackendClient {
   }
 
   /**
-   * Make API request
+   * Make API request to a specific base URL
    * Returns response data with error details preserved for specific handling
    */
-  async request(method, endpoint, data = null) {
-    const url = `${this.baseUrl}${endpoint}`;
+  async requestTo(baseUrl, method, endpoint, data = null) {
+    const url = `${baseUrl}${endpoint}`;
     const options = {
       method,
       headers: this.getHeaders(),
@@ -68,10 +73,26 @@ class BackendClient {
       return responseData;
     } catch (error) {
       if (error.message.includes('fetch')) {
-        throw new Error(`Network error: Could not connect to backend at ${this.baseUrl}`);
+        throw new Error(`Network error: Could not connect to backend at ${baseUrl}`);
       }
       throw error;
     }
+  }
+
+  /**
+   * Make API request to the main backend (Next.js app)
+   * Used for: auth, API keys, organizations
+   */
+  async request(method, endpoint, data = null) {
+    return this.requestTo(this.baseUrl, method, endpoint, data);
+  }
+
+  /**
+   * Make API request to the Convex HTTP endpoint
+   * Used for: CLI application management (register, update, list, sync)
+   */
+  async convexRequest(method, endpoint, data = null) {
+    return this.requestTo(this.convexUrl, method, endpoint, data);
   }
 
   /**
@@ -169,7 +190,8 @@ class BackendClient {
   }
 
   // ============================================
-  // Connected Applications API
+  // Connected Applications API (Convex HTTP)
+  // These endpoints hit the Convex HTTP actions directly
   // ============================================
 
   /**
@@ -180,7 +202,7 @@ class BackendClient {
    */
   async checkExistingApplication(organizationId, projectPathHash) {
     try {
-      return await this.request(
+      return await this.convexRequest(
         'GET',
         `/api/v1/cli/applications/by-path?organizationId=${organizationId}&hash=${projectPathHash}`
       );
@@ -199,7 +221,7 @@ class BackendClient {
    * @returns {Promise<{applicationId: string, apiKey?: object, backendUrl: string}>}
    */
   async registerApplication(data) {
-    return await this.request('POST', '/api/v1/cli/applications', data);
+    return await this.convexRequest('POST', '/api/v1/cli/applications', data);
   }
 
   /**
@@ -209,7 +231,7 @@ class BackendClient {
    * @returns {Promise<object>}
    */
   async updateApplication(applicationId, updates) {
-    return await this.request('PATCH', `/api/v1/cli/applications/${applicationId}`, updates);
+    return await this.convexRequest('PATCH', `/api/v1/cli/applications/${applicationId}`, updates);
   }
 
   /**
@@ -218,7 +240,7 @@ class BackendClient {
    * @returns {Promise<object>}
    */
   async getApplication(applicationId) {
-    return await this.request('GET', `/api/v1/cli/applications/${applicationId}`);
+    return await this.convexRequest('GET', `/api/v1/cli/applications/${applicationId}`);
   }
 
   /**
@@ -227,7 +249,17 @@ class BackendClient {
    * @returns {Promise<{applications: object[]}>}
    */
   async listApplications(organizationId) {
-    return await this.request('GET', `/api/v1/cli/applications?organizationId=${organizationId}`);
+    return await this.convexRequest('GET', `/api/v1/cli/applications?organizationId=${organizationId}`);
+  }
+
+  /**
+   * Sync application data
+   * @param {string} applicationId - The application ID
+   * @param {object} syncData - Sync configuration (direction, models)
+   * @returns {Promise<object>}
+   */
+  async syncApplication(applicationId, syncData) {
+    return await this.convexRequest('POST', `/api/v1/cli/applications/${applicationId}/sync`, syncData);
   }
 }
 

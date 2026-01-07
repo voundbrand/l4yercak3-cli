@@ -19,8 +19,9 @@ describe('BackendClient', () => {
     jest.clearAllMocks();
     configManager.getBackendUrl.mockReturnValue('https://backend.test.com');
     configManager.getSession.mockReturnValue(null);
-    // Reset baseUrl since the module was already instantiated
+    // Reset baseUrl and convexUrl since the module was already instantiated
     BackendClient.baseUrl = 'https://backend.test.com';
+    BackendClient.convexUrl = 'https://aromatic-akita-723.convex.site';
   });
 
   describe('getHeaders', () => {
@@ -380,7 +381,7 @@ describe('BackendClient', () => {
   });
 
   // ============================================
-  // Connected Applications API Tests
+  // Connected Applications API Tests (Convex HTTP)
   // ============================================
 
   describe('checkExistingApplication', () => {
@@ -399,8 +400,9 @@ describe('BackendClient', () => {
 
       const result = await BackendClient.checkExistingApplication('org-123', 'hash123');
 
+      // Should use Convex URL, not main backend
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/cli/applications/by-path?organizationId=org-123&hash=hash123'),
+        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/by-path?organizationId=org-123&hash=hash123',
         expect.objectContaining({ method: 'GET' })
       );
       expect(result.found).toBe(true);
@@ -434,7 +436,7 @@ describe('BackendClient', () => {
   });
 
   describe('registerApplication', () => {
-    it('registers new application', async () => {
+    it('registers new application via Convex URL', async () => {
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -459,8 +461,9 @@ describe('BackendClient', () => {
 
       const result = await BackendClient.registerApplication(registrationData);
 
+      // Should use Convex URL, not main backend
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/cli/applications'),
+        'https://aromatic-akita-723.convex.site/api/v1/cli/applications',
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify(registrationData),
@@ -471,7 +474,7 @@ describe('BackendClient', () => {
   });
 
   describe('updateApplication', () => {
-    it('updates existing application', async () => {
+    it('updates existing application via Convex URL', async () => {
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -490,7 +493,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.updateApplication('app-123', updates);
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/cli/applications/app-123'),
+        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/app-123',
         expect.objectContaining({
           method: 'PATCH',
           body: JSON.stringify(updates),
@@ -501,7 +504,7 @@ describe('BackendClient', () => {
   });
 
   describe('getApplication', () => {
-    it('fetches application details', async () => {
+    it('fetches application details via Convex URL', async () => {
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -515,7 +518,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.getApplication('app-123');
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/cli/applications/app-123'),
+        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/app-123',
         expect.objectContaining({ method: 'GET' })
       );
       expect(result.id).toBe('app-123');
@@ -524,7 +527,7 @@ describe('BackendClient', () => {
   });
 
   describe('listApplications', () => {
-    it('lists applications for organization', async () => {
+    it('lists applications for organization via Convex URL', async () => {
       const mockResponse = {
         ok: true,
         json: jest.fn().mockResolvedValue({
@@ -539,10 +542,40 @@ describe('BackendClient', () => {
       const result = await BackendClient.listApplications('org-123');
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/cli/applications?organizationId=org-123'),
+        'https://aromatic-akita-723.convex.site/api/v1/cli/applications?organizationId=org-123',
         expect.objectContaining({ method: 'GET' })
       );
       expect(result.applications).toHaveLength(2);
+    });
+  });
+
+  describe('syncApplication', () => {
+    it('syncs application data via Convex URL', async () => {
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          success: true,
+          syncedRecords: 42,
+        }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const syncData = {
+        direction: 'bidirectional',
+        models: ['contacts', 'organizations'],
+      };
+
+      const result = await BackendClient.syncApplication('app-123', syncData);
+
+      expect(fetch).toHaveBeenCalledWith(
+        'https://aromatic-akita-723.convex.site/api/v1/cli/applications/app-123/sync',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify(syncData),
+        })
+      );
+      expect(result.success).toBe(true);
+      expect(result.syncedRecords).toBe(42);
     });
   });
 });
