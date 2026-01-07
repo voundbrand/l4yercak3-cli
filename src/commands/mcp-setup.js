@@ -302,7 +302,7 @@ module.exports = {
     });
 
     clientChoices.push({
-      name: 'VS Code (with Continue/Cline)',
+      name: 'VS Code',
       value: 'vscode'
     });
 
@@ -501,40 +501,29 @@ function showClaudeDesktopManualInstructions() {
 }
 
 /**
- * Show VS Code setup instructions (Continue, Cline, etc.)
+ * Show VS Code setup instructions
  */
 function showVSCodeInstructions() {
   console.log(chalk.bold('🔧 VS Code MCP Setup\n'));
 
-  console.log(chalk.white('  VS Code supports MCP through extensions like Continue or Cline.\n'));
-
-  console.log(chalk.bold('  Option 1: Continue Extension'));
-  console.log(chalk.gray('  1. Install "Continue" extension from VS Code marketplace'));
-  console.log(chalk.gray('  2. Open Continue settings (gear icon in Continue panel)'));
-  console.log(chalk.gray('  3. Add to your config.json:\n'));
-
   const cmdConfig = getClaudeDesktopCommand();
-  console.log(chalk.cyan('     "experimental": {'));
-  console.log(chalk.cyan('       "modelContextProtocolServers": ['));
-  console.log(chalk.cyan('         {'));
-  console.log(chalk.cyan('           "name": "l4yercak3",'));
-  console.log(chalk.cyan(`           "command": "${cmdConfig.command}",`));
-  console.log(chalk.cyan(`           "args": ${JSON.stringify(cmdConfig.args)}`));
-  console.log(chalk.cyan('         }'));
-  console.log(chalk.cyan('       ]'));
-  console.log(chalk.cyan('     }'));
+
+  console.log(chalk.white('  VS Code supports MCP through various extensions.\n'));
+
+  console.log(chalk.gray('  Add this MCP server configuration to your extension:'));
+  console.log('');
+  console.log(chalk.cyan('  {'));
+  console.log(chalk.cyan('    "mcpServers": {'));
+  console.log(chalk.cyan('      "l4yercak3": {'));
+  console.log(chalk.cyan(`        "command": "${cmdConfig.command}",`));
+  console.log(chalk.cyan(`        "args": ${JSON.stringify(cmdConfig.args)}`));
+  console.log(chalk.cyan('      }'));
+  console.log(chalk.cyan('    }'));
+  console.log(chalk.cyan('  }'));
   console.log('');
 
-  console.log(chalk.bold('  Option 2: Cline Extension'));
-  console.log(chalk.gray('  1. Install "Cline" extension from VS Code marketplace'));
-  console.log(chalk.gray('  2. Open Cline settings panel'));
-  console.log(chalk.gray('  3. Navigate to MCP Servers section'));
-  console.log(chalk.gray('  4. Add server with command:'));
-  console.log(chalk.cyan(`     ${cmdConfig.description}`));
-  console.log('');
-
-  console.log(chalk.gray('  Note: Use absolute paths for reliability.'));
-  console.log(chalk.gray(`  Your l4yercak3 path: ${cmdConfig.command}`));
+  console.log(chalk.gray('  Check your extension\'s docs for where to add MCP servers.'));
+  console.log(chalk.gray(`  Server command: ${cmdConfig.description}`));
   console.log('');
 }
 
