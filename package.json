@@ -37,11 +37,14 @@
     "cli",
     "backend",
     "platform",
-    "integration"
+    "integration",
+    "mcp",
+    "claude-code"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
     "chalk": "^4.1.2",
     "commander": "^14.0.2",
     "figlet": "^1.7.0",

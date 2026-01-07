@@ -16,6 +16,7 @@ const statusCommand = require('../src/commands/status');
 const spreadCommand = require('../src/commands/spread');
 const apiKeysCommand = require('../src/commands/api-keys');
 const upgradeCommand = require('../src/commands/upgrade');
+const mcpServerCommand = require('../src/commands/mcp-server');
 
 // Create CLI program
 const program = new Command();
@@ -65,6 +66,11 @@ program
   .command(upgradeCommand.command)
   .description(upgradeCommand.description)
   .action(upgradeCommand.handler);
+
+program
+  .command(mcpServerCommand.command)
+  .description(mcpServerCommand.description)
+  .action(mcpServerCommand.handler);
 
 // Show logo and welcome message if no command provided
 if (process.argv.length === 2) {
