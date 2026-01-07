@@ -197,12 +197,6 @@ async function handleLogin() {
     configManager.saveSession(session);
 
     // Validate session with backend
-    // Add delay to allow Convex to propagate the session (debugging timing issues)
-    if (process.env.L4YERCAK3_DEBUG) {
-      console.log('[DEBUG] Waiting 2s for session propagation...');
-    }
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
     try {
       const userInfo = await backendClient.validateSession();
       if (userInfo) {

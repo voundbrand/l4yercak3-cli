@@ -230,8 +230,61 @@ async function handleSpread() {
         console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com?openWindow=integrations&panel=api-keys'));
         console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com?openWindow=store\n'));
         process.exit(0);
+      } else if (existingKeys && existingKeys.keys && existingKeys.keys.length > 0) {
+        // Has existing keys - offer to reuse or generate new
+        const activeKeys = existingKeys.keys.filter(k => k.status === 'active');
+
+        if (activeKeys.length > 0) {
+          console.log(chalk.gray(`  Found ${activeKeys.length} active API key(s)\n`));
+
+          const keyChoices = activeKeys.map(key => ({
+            name: `${key.name} (${key.keyPreview})`,
+            value: key.id,
+          }));
+          keyChoices.push({ name: '➕ Generate a new API key', value: '__generate__' });
+
+          const { keyChoice } = await inquirer.prompt([
+            {
+              type: 'list',
+              name: 'keyChoice',
+              message: 'Which API key would you like to use?',
+              choices: keyChoices,
+            },
+          ]);
+
+          if (keyChoice === '__generate__') {
+            apiKey = await generateNewApiKey(organizationId);
+          } else {
+            // User selected existing key - we only have the preview, not the full key
+            // They need to use the key they have stored or get it from dashboard
+            const selectedKey = activeKeys.find(k => k.id === keyChoice);
+            console.log(chalk.yellow(`\n  ⚠️  For security, we can't retrieve the full API key.`));
+            console.log(chalk.gray(`  You selected: ${selectedKey.name} (${selectedKey.keyPreview})`));
+            console.log(chalk.gray(`  If you have this key stored, enter it below.`));
+            console.log(chalk.gray(`  Otherwise, generate a new key or find it at:`));
+            console.log(chalk.gray(`  https://app.l4yercak3.com?openWindow=integrations&panel=api-keys\n`));
+
+            const { existingKey } = await inquirer.prompt([
+              {
+                type: 'input',
+                name: 'existingKey',
+                message: 'Enter your API key (or press Enter to generate new):',
+              },
+            ]);
+
+            if (existingKey.trim()) {
+              apiKey = existingKey.trim();
+              console.log(chalk.green(`  ✅ Using existing API key\n`));
+            } else {
+              apiKey = await generateNewApiKey(organizationId);
+            }
+          }
+        } else {
+          // Only revoked keys exist - generate new
+          apiKey = await generateNewApiKey(organizationId);
+        }
       } else {
-        // Generate new key (either no keys exist or can create more)
+        // No existing keys - generate one
         apiKey = await generateNewApiKey(organizationId);
       }
     } catch (error) {
