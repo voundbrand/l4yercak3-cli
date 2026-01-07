@@ -266,7 +266,6 @@ module.exports = {
 
     // Detect available clients
     const hasClaudeCli = isClaudeInstalled();
-    const hasClaudeDesktop = hasClaudeDesktopConfig() || fs.existsSync(path.dirname(getClaudeDesktopConfigPath()));
 
     // Build client choices
     const clientChoices = [];
@@ -284,6 +283,26 @@ module.exports = {
       name: `Claude Desktop${isClaudeDesktopConfigured() ? chalk.gray(' - already configured') : ''}`,
       value: 'claude-desktop',
       configured: isClaudeDesktopConfigured()
+    });
+
+    clientChoices.push({
+      name: 'VS Code (with Continue/Cline)',
+      value: 'vscode'
+    });
+
+    clientChoices.push({
+      name: 'Cursor',
+      value: 'cursor'
+    });
+
+    clientChoices.push({
+      name: 'Windsurf',
+      value: 'windsurf'
+    });
+
+    clientChoices.push({
+      name: 'Zed',
+      value: 'zed'
     });
 
     clientChoices.push({
@@ -307,6 +326,14 @@ module.exports = {
       await setupClaudeCode();
     } else if (client === 'claude-desktop') {
       await setupClaudeDesktop();
+    } else if (client === 'vscode') {
+      showVSCodeInstructions();
+    } else if (client === 'cursor') {
+      showCursorInstructions();
+    } else if (client === 'windsurf') {
+      showWindsurfInstructions();
+    } else if (client === 'zed') {
+      showZedInstructions();
     } else {
       showOtherClientInstructions();
     }
@@ -454,6 +481,150 @@ function showClaudeDesktopManualInstructions() {
   console.log('');
   console.log(chalk.gray('  Note: Claude Desktop doesn\'t inherit your shell PATH.'));
   console.log(chalk.gray(`  Find paths with: ${chalk.cyan('which l4yercak3')} or ${chalk.cyan('which npx')}`));
+  console.log('');
+}
+
+/**
+ * Show VS Code setup instructions (Continue, Cline, etc.)
+ */
+function showVSCodeInstructions() {
+  console.log(chalk.bold('🔧 VS Code MCP Setup\n'));
+
+  console.log(chalk.white('  VS Code supports MCP through extensions like Continue or Cline.\n'));
+
+  console.log(chalk.bold('  Option 1: Continue Extension'));
+  console.log(chalk.gray('  1. Install "Continue" extension from VS Code marketplace'));
+  console.log(chalk.gray('  2. Open Continue settings (gear icon in Continue panel)'));
+  console.log(chalk.gray('  3. Add to your config.json:\n'));
+
+  const cmdConfig = getClaudeDesktopCommand();
+  console.log(chalk.cyan('     "experimental": {'));
+  console.log(chalk.cyan('       "modelContextProtocolServers": ['));
+  console.log(chalk.cyan('         {'));
+  console.log(chalk.cyan('           "name": "l4yercak3",'));
+  console.log(chalk.cyan(`           "command": "${cmdConfig.command}",`));
+  console.log(chalk.cyan(`           "args": ${JSON.stringify(cmdConfig.args)}`));
+  console.log(chalk.cyan('         }'));
+  console.log(chalk.cyan('       ]'));
+  console.log(chalk.cyan('     }'));
+  console.log('');
+
+  console.log(chalk.bold('  Option 2: Cline Extension'));
+  console.log(chalk.gray('  1. Install "Cline" extension from VS Code marketplace'));
+  console.log(chalk.gray('  2. Open Cline settings panel'));
+  console.log(chalk.gray('  3. Navigate to MCP Servers section'));
+  console.log(chalk.gray('  4. Add server with command:'));
+  console.log(chalk.cyan(`     ${cmdConfig.description}`));
+  console.log('');
+
+  console.log(chalk.gray('  Note: Use absolute paths for reliability.'));
+  console.log(chalk.gray(`  Your l4yercak3 path: ${cmdConfig.command}`));
+  console.log('');
+}
+
+/**
+ * Show Cursor setup instructions
+ */
+function showCursorInstructions() {
+  console.log(chalk.bold('🔧 Cursor MCP Setup\n'));
+
+  console.log(chalk.white('  Cursor supports MCP servers through its settings.\n'));
+
+  const cmdConfig = getClaudeDesktopCommand();
+  const configPath = os.platform() === 'darwin'
+    ? '~/.cursor/mcp.json'
+    : os.platform() === 'win32'
+      ? '%APPDATA%\\Cursor\\mcp.json'
+      : '~/.config/cursor/mcp.json';
+
+  console.log(chalk.gray(`  1. Create or edit: ${configPath}`));
+  console.log(chalk.gray('  2. Add the following configuration:\n'));
+
+  console.log(chalk.cyan('  {'));
+  console.log(chalk.cyan('    "mcpServers": {'));
+  console.log(chalk.cyan('      "l4yercak3": {'));
+  console.log(chalk.cyan(`        "command": "${cmdConfig.command}",`));
+  console.log(chalk.cyan(`        "args": ${JSON.stringify(cmdConfig.args)}`));
+  console.log(chalk.cyan('      }'));
+  console.log(chalk.cyan('    }'));
+  console.log(chalk.cyan('  }'));
+  console.log('');
+
+  console.log(chalk.gray('  3. Restart Cursor for changes to take effect'));
+  console.log('');
+
+  console.log(chalk.yellow('  Note: Cursor\'s MCP support may vary by version.'));
+  console.log(chalk.gray('  Check Cursor documentation for the latest setup process.'));
+  console.log('');
+}
+
+/**
+ * Show Windsurf setup instructions
+ */
+function showWindsurfInstructions() {
+  console.log(chalk.bold('🔧 Windsurf (Codeium) MCP Setup\n'));
+
+  console.log(chalk.white('  Windsurf supports MCP through Cascade.\n'));
+
+  const cmdConfig = getClaudeDesktopCommand();
+  const configPath = os.platform() === 'darwin'
+    ? '~/.codeium/windsurf/mcp_config.json'
+    : os.platform() === 'win32'
+      ? '%APPDATA%\\Codeium\\windsurf\\mcp_config.json'
+      : '~/.config/codeium/windsurf/mcp_config.json';
+
+  console.log(chalk.gray(`  1. Create or edit: ${configPath}`));
+  console.log(chalk.gray('  2. Add the following configuration:\n'));
+
+  console.log(chalk.cyan('  {'));
+  console.log(chalk.cyan('    "mcpServers": {'));
+  console.log(chalk.cyan('      "l4yercak3": {'));
+  console.log(chalk.cyan(`        "command": "${cmdConfig.command}",`));
+  console.log(chalk.cyan(`        "args": ${JSON.stringify(cmdConfig.args)}`));
+  console.log(chalk.cyan('      }'));
+  console.log(chalk.cyan('    }'));
+  console.log(chalk.cyan('  }'));
+  console.log('');
+
+  console.log(chalk.gray('  3. Restart Windsurf for changes to take effect'));
+  console.log('');
+
+  console.log(chalk.gray('  Once configured, you can use L4YERCAK3 tools through Cascade.'));
+  console.log('');
+}
+
+/**
+ * Show Zed setup instructions
+ */
+function showZedInstructions() {
+  console.log(chalk.bold('🔧 Zed MCP Setup\n'));
+
+  console.log(chalk.white('  Zed supports MCP servers through its settings.\n'));
+
+  const cmdConfig = getClaudeDesktopCommand();
+  const configPath = os.platform() === 'darwin'
+    ? '~/.config/zed/settings.json'
+    : '~/.config/zed/settings.json';
+
+  console.log(chalk.gray(`  1. Open Zed settings: ${configPath}`));
+  console.log(chalk.gray('  2. Add or update the context_servers section:\n'));
+
+  console.log(chalk.cyan('  {'));
+  console.log(chalk.cyan('    "context_servers": {'));
+  console.log(chalk.cyan('      "l4yercak3": {'));
+  console.log(chalk.cyan(`        "command": {`));
+  console.log(chalk.cyan(`          "path": "${cmdConfig.command}",`));
+  console.log(chalk.cyan(`          "args": ${JSON.stringify(cmdConfig.args)}`));
+  console.log(chalk.cyan('        }'));
+  console.log(chalk.cyan('      }'));
+  console.log(chalk.cyan('    }'));
+  console.log(chalk.cyan('  }'));
+  console.log('');
+
+  console.log(chalk.gray('  3. Restart Zed or reload the configuration'));
+  console.log('');
+
+  console.log(chalk.gray('  See https://zed.dev/docs/context-servers for more details.'));
   console.log('');
 }
 
