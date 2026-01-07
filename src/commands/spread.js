@@ -220,9 +220,9 @@ async function handleSpread() {
         console.log(chalk.gray('  Could not check existing keys, attempting to generate...'));
       }
 
-      if (existingKeys && existingKeys.keys && existingKeys.keys.length > 0 && !existingKeys.canCreateMore) {
-        // At API key limit - inform user and exit
-        console.log(chalk.yellow(`  ⚠️  You've reached your API key limit (${existingKeys.keys.length} key(s))`));
+      if (existingKeys && existingKeys.canCreateMore === false) {
+        // At API key limit - inform user and exit (only if explicitly false, not undefined)
+        console.log(chalk.yellow(`  ⚠️  You've reached your API key limit (${existingKeys.keys?.length || 0} key(s))`));
         if (existingKeys.limitDescription) {
           console.log(chalk.gray(`     ${existingKeys.limitDescription}`));
         }
