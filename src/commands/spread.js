@@ -477,19 +477,26 @@ async function handleSpread() {
         }
       } else {
         // Register new application
+        // Build source object, only including routerType if it has a value
+        const sourceData = {
+          type: 'cli',
+          projectPathHash,
+          cliVersion: pkg.version,
+          framework: detection.framework.type || 'unknown',
+          frameworkVersion: detection.framework.metadata?.version,
+          hasTypeScript: detection.framework.metadata?.hasTypeScript || false,
+        };
+
+        // Only add routerType if it exists (Next.js has 'app'/'pages', Expo has 'expo-router'/'react-navigation')
+        if (detection.framework.metadata?.routerType) {
+          sourceData.routerType = detection.framework.metadata.routerType;
+        }
+
         const registrationData = {
           organizationId,
           name: detection.github.repo || organizationName || 'My Application',
           description: `Connected via CLI from ${detection.framework.type || 'unknown'} project`,
-          source: {
-            type: 'cli',
-            projectPathHash,
-            cliVersion: pkg.version,
-            framework: detection.framework.type || 'unknown',
-            frameworkVersion: detection.framework.metadata?.version,
-            hasTypeScript: detection.framework.metadata?.hasTypeScript || false,
-            routerType: detection.framework.metadata?.routerType,
-          },
+          source: sourceData,
           connection: {
             features,
             hasFrontendDatabase: !!detection.framework.metadata?.hasPrisma,
