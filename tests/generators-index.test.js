@@ -98,7 +98,7 @@ describe('FileGenerator', () => {
       expect(result.envFile).toContain('.env.local');
     });
 
-    it('generates NextAuth config when oauth feature enabled', async () => {
+    it('generates NextAuth config when oauth feature enabled (Next.js)', async () => {
       const options = {
         projectPath: mockProjectPath,
         apiKey: 'test-key',
@@ -108,11 +108,29 @@ describe('FileGenerator', () => {
         oauthProviders: ['google'],
         isTypeScript: false,
         routerType: 'app',
+        frameworkType: 'nextjs', // NextAuth is Next.js only
       };
 
       const result = await FileGenerator.generate(options);
 
       expect(result.nextauth).not.toBeNull();
+    });
+
+    it('does not generate NextAuth for Expo/mobile apps', async () => {
+      const options = {
+        projectPath: mockProjectPath,
+        apiKey: 'test-key',
+        backendUrl: 'https://backend.test.com',
+        organizationId: 'org-123',
+        features: ['oauth'],
+        oauthProviders: ['google'],
+        isTypeScript: true,
+        frameworkType: 'expo',
+      };
+
+      const result = await FileGenerator.generate(options);
+
+      expect(result.nextauth).toBeNull();
     });
 
     it('does not generate NextAuth when oauth not in features', async () => {
@@ -198,7 +216,7 @@ describe('FileGenerator', () => {
       expect(result).toHaveProperty('gitignore');
     });
 
-    it('generates all files when all features enabled', async () => {
+    it('generates all files when all features enabled (Next.js)', async () => {
       const options = {
         projectPath: mockProjectPath,
         apiKey: 'test-key',
@@ -210,6 +228,7 @@ describe('FileGenerator', () => {
         routerType: 'app',
         productionDomain: 'example.com',
         appName: 'Full App',
+        frameworkType: 'nextjs',
       };
 
       const result = await FileGenerator.generate(options);

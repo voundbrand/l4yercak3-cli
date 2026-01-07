@@ -550,9 +550,17 @@ async function handleSpread() {
       console.log(chalk.yellow('  📋 Next steps:\n'));
       console.log(chalk.gray('     1. Follow the OAuth setup guide (OAUTH_SETUP_GUIDE.md)'));
       console.log(chalk.gray('     2. Add OAuth credentials to .env.local'));
-      console.log(chalk.gray('     3. Install NextAuth.js: npm install next-auth'));
-      if (oauthProviders.includes('microsoft')) {
-        console.log(chalk.gray('     4. Install Azure AD provider: npm install next-auth/providers/azure-ad'));
+
+      // Framework-specific OAuth instructions
+      const frameworkType = detection.framework.type;
+      if (frameworkType === 'expo' || frameworkType === 'react-native') {
+        console.log(chalk.gray('     3. Install expo-auth-session: npx expo install expo-auth-session expo-crypto'));
+        console.log(chalk.gray('     4. Configure app.json with your OAuth scheme'));
+      } else {
+        console.log(chalk.gray('     3. Install NextAuth.js: npm install next-auth'));
+        if (oauthProviders.includes('microsoft')) {
+          console.log(chalk.gray('     4. Install Azure AD provider: npm install next-auth/providers/azure-ad'));
+        }
       }
       console.log('');
     }

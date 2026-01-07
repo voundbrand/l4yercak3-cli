@@ -9,6 +9,13 @@ const { checkFileOverwrite, writeFileWithBackup, ensureDir } = require('../utils
 
 class ApiClientGenerator {
   /**
+   * Check if framework is a mobile platform
+   */
+  isMobileFramework(frameworkType) {
+    return ['expo', 'react-native'].includes(frameworkType);
+  }
+
+  /**
    * Generate API client file
    * @param {Object} options - Generation options
    * @returns {Promise<string|null>} - Path to generated file or null if skipped
@@ -20,18 +27,26 @@ class ApiClientGenerator {
       backendUrl,
       organizationId,
       isTypeScript,
+      frameworkType,
     } = options;
 
-    // Determine output path based on project structure
-    const libDir = fs.existsSync(path.join(projectPath, 'src'))
-      ? path.join(projectPath, 'src', 'lib')
-      : path.join(projectPath, 'lib');
+    // Determine output path based on framework and project structure
+    let outputDir;
+    if (this.isMobileFramework(frameworkType)) {
+      // Expo/React Native: use src/api or src/services
+      outputDir = path.join(projectPath, 'src', 'api');
+    } else {
+      // Next.js/Web: use lib or src/lib
+      outputDir = fs.existsSync(path.join(projectPath, 'src'))
+        ? path.join(projectPath, 'src', 'lib')
+        : path.join(projectPath, 'lib');
+    }
 
-    // Ensure lib directory exists
-    ensureDir(libDir);
+    // Ensure output directory exists
+    ensureDir(outputDir);
 
     const extension = isTypeScript ? 'ts' : 'js';
-    const outputPath = path.join(libDir, `api-client.${extension}`);
+    const outputPath = path.join(outputDir, `api-client.${extension}`);
 
     // Check if file exists and get action
     const action = await checkFileOverwrite(outputPath);
