@@ -592,7 +592,8 @@ async function handleSpread() {
     } catch (regError) {
       // Registration failed but files were generated - warn but don't fail
       console.log(chalk.yellow(`  ⚠️  Could not register with backend: ${regError.message}`));
-      console.log(chalk.gray('     Your files were generated. Registration can be retried later.\n'));
+      console.log(chalk.gray('     Your files were generated successfully.'));
+      console.log(chalk.gray('     Backend registration will be available in a future update.\n'));
     }
 
     // Save project configuration
@@ -614,7 +615,14 @@ async function handleSpread() {
     configManager.saveProjectConfig(detection.projectPath, projectConfig);
     console.log(chalk.gray(`  📝 Configuration saved to ~/.l4yercak3/config.json\n`));
 
-    console.log(chalk.cyan('\n  🎉 Setup complete!\n'));
+    // Show appropriate completion message based on registration status
+    if (applicationId) {
+      console.log(chalk.cyan('\n  🎉 Setup complete!\n'));
+    } else {
+      console.log(chalk.cyan('\n  🎉 Local setup complete!\n'));
+      console.log(chalk.yellow('  ⚠️  Note: Backend registration pending - your app works locally but'));
+      console.log(chalk.yellow('     won\'t appear in the L4YERCAK3 dashboard until endpoints are available.\n'));
+    }
 
     if (features.includes('oauth')) {
       console.log(chalk.yellow('  📋 Next steps:\n'));
