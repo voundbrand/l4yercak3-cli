@@ -1,6 +1,6 @@
 {
   "name": "@l4yercak3/cli",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Icing on the L4yercak3 - The sweet finishing touch for your Layer Cake integration",
   "main": "src/index.js",
   "bin": {
