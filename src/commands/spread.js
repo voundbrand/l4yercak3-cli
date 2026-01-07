@@ -522,6 +522,8 @@ async function handleSpread() {
             githubRepo: detection.github.isGitHub ? `${detection.github.owner}/${detection.github.repo}` : undefined,
             githubBranch: detection.github.branch || 'main',
           },
+          // Don't generate a new API key if user already has one configured
+          skipApiKeyGeneration: apiKey === null,
         };
 
         const registrationResult = await backendClient.registerApplication(registrationData);
@@ -583,9 +585,9 @@ async function handleSpread() {
         applicationId = registrationResult.applicationId;
         console.log(chalk.green(`  ✅ Application registered with L4YERCAK3\n`));
 
-        // If backend returned a new API key, use it
+        // Show API key if backend generated one
         if (registrationResult.apiKey && registrationResult.apiKey.key) {
-          console.log(chalk.gray(`     API key generated: ${registrationResult.apiKey.prefix}`));
+          console.log(chalk.gray(`     API key: ${registrationResult.apiKey.prefix}`));
         }
       }
     } catch (regError) {
