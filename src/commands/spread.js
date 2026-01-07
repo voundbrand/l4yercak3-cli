@@ -227,8 +227,8 @@ async function handleSpread() {
           console.log(chalk.gray(`     ${existingKeys.limitDescription}`));
         }
         console.log(chalk.cyan('\n  To continue, either:'));
-        console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com/settings/api-keys'));
-        console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com/settings/billing\n'));
+        console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com?openWindow=integrations&panel=api-keys'));
+        console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com?openWindow=store\n'));
         process.exit(0);
       } else {
         // Generate new key (either no keys exist or can create more)
@@ -242,8 +242,8 @@ async function handleSpread() {
           console.log(chalk.gray(`  ${error.suggestion}`));
         }
         console.log(chalk.cyan('\n  To continue, either:'));
-        console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com/settings/api-keys'));
-        console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com/settings/billing\n'));
+        console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com?openWindow=integrations&panel=api-keys'));
+        console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com?openWindow=store\n'));
         process.exit(0);
       } else if (error.code === 'SESSION_EXPIRED') {
         console.log(chalk.red(`\n  ❌ Session expired. Please run "l4yercak3 login" again.\n`));

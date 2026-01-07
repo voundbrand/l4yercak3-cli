@@ -95,7 +95,7 @@ async function handleApiKeysList() {
         console.log(chalk.green(`  ✅ You can create more API keys`));
       } else {
         console.log(chalk.yellow(`  ⚠️  You've reached your API key limit`));
-        console.log(chalk.gray('     Upgrade at: https://app.l4yercak3.com/settings/billing'));
+        console.log(chalk.gray('     Upgrade at: https://app.l4yercak3.com?openWindow=store'));
       }
     }
     console.log('');
