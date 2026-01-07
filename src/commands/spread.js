@@ -220,79 +220,18 @@ async function handleSpread() {
         console.log(chalk.gray('  Could not check existing keys, attempting to generate...'));
       }
 
-      if (existingKeys && existingKeys.keys && existingKeys.keys.length > 0) {
-        // Organization has existing keys
-        console.log(chalk.yellow(`  ⚠️  Found ${existingKeys.keys.length} existing API key(s)`));
-
+      if (existingKeys && existingKeys.keys && existingKeys.keys.length > 0 && !existingKeys.canCreateMore) {
+        // At API key limit - inform user and exit
+        console.log(chalk.yellow(`  ⚠️  You've reached your API key limit (${existingKeys.keys.length} key(s))`));
         if (existingKeys.limitDescription) {
-          console.log(chalk.gray(`     Limit: ${existingKeys.limitDescription}`));
+          console.log(chalk.gray(`     ${existingKeys.limitDescription}`));
         }
-
-        // Show existing keys (masked)
-        existingKeys.keys.forEach((key, i) => {
-          const maskedKey = key.key ? `${key.key.substring(0, 10)}...` : key.name || `Key ${i + 1}`;
-          console.log(chalk.gray(`     • ${key.name || 'Unnamed'}: ${maskedKey}`));
-        });
-        console.log('');
-
-        if (!existingKeys.canCreateMore) {
-          // At limit - offer to use existing key
-          const { useExisting } = await inquirer.prompt([
-            {
-              type: 'confirm',
-              name: 'useExisting',
-              message: 'You\'ve reached your API key limit. Use an existing key from your .env.local file?',
-              default: true,
-            },
-          ]);
-
-          if (useExisting) {
-            const { manualKey } = await inquirer.prompt([
-              {
-                type: 'input',
-                name: 'manualKey',
-                message: 'Enter your existing API key:',
-                validate: (input) => input.trim().length > 0 || 'API key is required',
-              },
-            ]);
-            apiKey = manualKey.trim();
-            console.log(chalk.green(`  ✅ Using provided API key\n`));
-          } else {
-            console.log(chalk.yellow('\n  ⚠️  To generate more API keys, upgrade your plan at https://app.l4yercak3.com/settings/billing\n'));
-            process.exit(0);
-          }
-        } else {
-          // Can create more - ask what to do
-          const { keyAction } = await inquirer.prompt([
-            {
-              type: 'list',
-              name: 'keyAction',
-              message: 'What would you like to do?',
-              choices: [
-                { name: 'Generate a new API key', value: 'generate' },
-                { name: 'Enter an existing API key', value: 'existing' },
-              ],
-            },
-          ]);
-
-          if (keyAction === 'existing') {
-            const { manualKey } = await inquirer.prompt([
-              {
-                type: 'input',
-                name: 'manualKey',
-                message: 'Enter your existing API key:',
-                validate: (input) => input.trim().length > 0 || 'API key is required',
-              },
-            ]);
-            apiKey = manualKey.trim();
-            console.log(chalk.green(`  ✅ Using provided API key\n`));
-          } else {
-            // Generate new key
-            apiKey = await generateNewApiKey(organizationId);
-          }
-        }
+        console.log(chalk.cyan('\n  To continue, either:'));
+        console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com/settings/api-keys'));
+        console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com/settings/billing\n'));
+        process.exit(0);
       } else {
-        // No existing keys - generate one
+        // Generate new key (either no keys exist or can create more)
         apiKey = await generateNewApiKey(organizationId);
       }
     } catch (error) {
@@ -302,64 +241,10 @@ async function handleSpread() {
         if (error.suggestion) {
           console.log(chalk.gray(`  ${error.suggestion}`));
         }
-
-        // Show upgrade option if available
-        if (error.upgradeUrl) {
-          console.log(chalk.cyan(`\n  🚀 Upgrade your plan to get more API keys:`));
-          console.log(chalk.gray(`     ${error.upgradeUrl}\n`));
-
-          const { action } = await inquirer.prompt([
-            {
-              type: 'list',
-              name: 'action',
-              message: 'What would you like to do?',
-              choices: [
-                { name: 'Open upgrade page in browser', value: 'upgrade' },
-                { name: 'Enter an existing API key', value: 'existing' },
-                { name: 'Exit', value: 'exit' },
-              ],
-            },
-          ]);
-
-          if (action === 'upgrade') {
-            const { default: open } = require('open');
-            console.log(chalk.gray('  Opening browser...'));
-            await open(error.upgradeUrl);
-            console.log(chalk.gray('\n  After upgrading, run "l4yercak3 spread" again.\n'));
-            process.exit(0);
-          } else if (action === 'existing') {
-            const { manualKey } = await inquirer.prompt([
-              {
-                type: 'input',
-                name: 'manualKey',
-                message: 'Enter your existing API key:',
-                validate: (input) => input.trim().length > 0 || 'API key is required',
-              },
-            ]);
-            apiKey = manualKey.trim();
-            console.log(chalk.green(`  ✅ Using provided API key\n`));
-          } else {
-            process.exit(0);
-          }
-        } else {
-          // No upgrade URL - fallback to manual entry
-          console.log(chalk.gray('\n  You can enter an existing API key or upgrade your plan.\n'));
-
-          const { manualKey } = await inquirer.prompt([
-            {
-              type: 'input',
-              name: 'manualKey',
-              message: 'Enter your existing API key (or press Enter to exit):',
-            },
-          ]);
-
-          if (manualKey.trim()) {
-            apiKey = manualKey.trim();
-            console.log(chalk.green(`  ✅ Using provided API key\n`));
-          } else {
-            process.exit(0);
-          }
-        }
+        console.log(chalk.cyan('\n  To continue, either:'));
+        console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com/settings/api-keys'));
+        console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com/settings/billing\n'));
+        process.exit(0);
       } else if (error.code === 'SESSION_EXPIRED') {
         console.log(chalk.red(`\n  ❌ Session expired. Please run "l4yercak3 login" again.\n`));
         process.exit(1);
