@@ -14,6 +14,7 @@ const { execSync } = require('child_process');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const configManager = require('../config/config-manager');
+const backendClient = require('../api/backend-client');
 
 /**
  * Check if Claude CLI is installed
@@ -254,14 +255,29 @@ module.exports = {
 
     // Check if logged in
     const session = configManager.getSession();
-    if (!session) {
+    if (!session || !session.token) {
       console.log(chalk.yellow('⚠️  Not logged in to L4YERCAK3'));
       console.log(chalk.gray('   Run `l4yercak3 login` first to authenticate.\n'));
       console.log(chalk.gray('   The MCP server needs your session to access L4YERCAK3 features.'));
       process.exit(1);
     }
 
-    console.log(chalk.green('✓ Logged in as: ') + chalk.white(session.email || session.userId));
+    // Validate session and get user info
+    let userEmail = session.email;
+    if (!userEmail) {
+      try {
+        const userInfo = await backendClient.validateSession();
+        if (userInfo && userInfo.email) {
+          userEmail = userInfo.email;
+          // Update stored session with email for future use
+          configManager.saveSession({ ...session, email: userEmail, userId: userInfo.userId });
+        }
+      } catch {
+        // Validation failed, continue without email display
+      }
+    }
+
+    console.log(chalk.green('✓ Logged in') + (userEmail ? chalk.gray(` as ${userEmail}`) : ''));
     console.log('');
 
     // Detect available clients
