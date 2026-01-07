@@ -490,46 +490,8 @@ async function handleSpread() {
       // Check if application already exists for this project
       const existingApp = await backendClient.checkExistingApplication(organizationId, projectPathHash);
 
-      if (existingApp.found && existingApp.application) {
-        // Application already registered
-        console.log(chalk.yellow(`  ⚠️  This project is already registered as "${existingApp.application.name}"`));
-
-        const { updateAction } = await inquirer.prompt([
-          {
-            type: 'list',
-            name: 'updateAction',
-            message: 'What would you like to do?',
-            choices: [
-              { name: 'Update existing registration', value: 'update' },
-              { name: 'Skip registration (keep existing)', value: 'skip' },
-            ],
-          },
-        ]);
-
-        if (updateAction === 'update') {
-          // Update existing application
-          const updateData = {
-            connection: {
-              features,
-              hasFrontendDatabase: !!detection.framework.metadata?.hasPrisma,
-              frontendDatabaseType: detection.framework.metadata?.hasPrisma ? 'prisma' : undefined,
-            },
-            deployment: {
-              productionUrl: productionDomain ? `https://${productionDomain}` : undefined,
-              githubRepo: detection.github.isGitHub ? `${detection.github.owner}/${detection.github.repo}` : undefined,
-            },
-          };
-
-          await backendClient.updateApplication(existingApp.application.id, updateData);
-          applicationId = existingApp.application.id;
-          isUpdate = true;
-          console.log(chalk.green(`  ✅ Application registration updated\n`));
-        } else {
-          applicationId = existingApp.application.id;
-          console.log(chalk.gray(`  Skipped registration update\n`));
-        }
-      } else {
-        // Register new application
+      // Helper to register a new application
+      const registerNewApplication = async () => {
         // Build source object, only including routerType if it has a value
         const sourceData = {
           type: 'cli',
@@ -540,7 +502,7 @@ async function handleSpread() {
           hasTypeScript: detection.framework.metadata?.hasTypeScript || false,
         };
 
-        // Only add routerType if it exists (Next.js has 'app'/'pages', Expo has 'expo-router'/'react-navigation')
+        // Only add routerType if it exists
         if (detection.framework.metadata?.routerType) {
           sourceData.routerType = detection.framework.metadata.routerType;
         }
@@ -563,6 +525,61 @@ async function handleSpread() {
         };
 
         const registrationResult = await backendClient.registerApplication(registrationData);
+        return registrationResult;
+      };
+
+      if (existingApp.found && existingApp.application) {
+        // Application already registered
+        console.log(chalk.yellow(`  ⚠️  This project is already registered as "${existingApp.application.name}"`));
+
+        const { updateAction } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'updateAction',
+            message: 'What would you like to do?',
+            choices: [
+              { name: 'Update existing registration', value: 'update' },
+              { name: 'Register as new application', value: 'new' },
+              { name: 'Skip registration (keep existing)', value: 'skip' },
+            ],
+          },
+        ]);
+
+        if (updateAction === 'update') {
+          // Update existing application
+          const updateData = {
+            name: projectName, // Update name too
+            connection: {
+              features,
+              hasFrontendDatabase: !!detection.framework.metadata?.hasPrisma,
+              frontendDatabaseType: detection.framework.metadata?.hasPrisma ? 'prisma' : undefined,
+            },
+            deployment: {
+              productionUrl: productionDomain ? `https://${productionDomain}` : undefined,
+              githubRepo: detection.github.isGitHub ? `${detection.github.owner}/${detection.github.repo}` : undefined,
+            },
+          };
+
+          await backendClient.updateApplication(existingApp.application.id, updateData);
+          applicationId = existingApp.application.id;
+          isUpdate = true;
+          console.log(chalk.green(`  ✅ Application registration updated\n`));
+        } else if (updateAction === 'new') {
+          // Register as new application
+          const registrationResult = await registerNewApplication();
+          applicationId = registrationResult.applicationId;
+          console.log(chalk.green(`  ✅ New application registered with L4YERCAK3\n`));
+
+          if (registrationResult.apiKey && registrationResult.apiKey.key) {
+            console.log(chalk.gray(`     API key generated: ${registrationResult.apiKey.prefix}`));
+          }
+        } else {
+          applicationId = existingApp.application.id;
+          console.log(chalk.gray(`  Skipped registration update\n`));
+        }
+      } else {
+        // Register new application
+        const registrationResult = await registerNewApplication();
         applicationId = registrationResult.applicationId;
         console.log(chalk.green(`  ✅ Application registered with L4YERCAK3\n`));
 
