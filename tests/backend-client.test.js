@@ -248,6 +248,58 @@ describe('BackendClient', () => {
     });
   });
 
+  describe('revokeSession', () => {
+    it('calls revoke endpoint when session exists', async () => {
+      configManager.getSession.mockReturnValue({ token: 'test-token' });
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({ success: true }),
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await BackendClient.revokeSession();
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v1/auth/cli/revoke'),
+        expect.objectContaining({ method: 'POST' })
+      );
+      expect(result.success).toBe(true);
+    });
+
+    it('returns success when no session exists', async () => {
+      configManager.getSession.mockReturnValue(null);
+
+      const result = await BackendClient.revokeSession();
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+    });
+
+    it('returns success when session has no token', async () => {
+      configManager.getSession.mockReturnValue({ expiresAt: Date.now() });
+
+      const result = await BackendClient.revokeSession();
+
+      expect(fetch).not.toHaveBeenCalled();
+      expect(result.success).toBe(true);
+    });
+
+    it('returns failure but does not throw on error', async () => {
+      configManager.getSession.mockReturnValue({ token: 'test-token' });
+      fetch.mockRejectedValue(new Error('Revoke failed'));
+
+      // Suppress console.error for this test
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result = await BackendClient.revokeSession();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Revoke failed');
+
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('generateState', () => {
     it('generates a 64-character hex string', () => {
       const state = BackendClient.generateState();

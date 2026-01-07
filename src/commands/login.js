@@ -156,9 +156,12 @@ async function handleLogin() {
         await promptSetupWizard();
         return;
       } else {
-        // Session is invalid on backend - clear it and proceed to login
+        // Session is invalid on backend - revoke it and proceed to login
         console.log(chalk.yellow('  ⚠️  Your session has expired or is invalid'));
-        console.log(chalk.gray('  Starting fresh login...\n'));
+        console.log(chalk.gray('  Revoking old session and starting fresh login...\n'));
+
+        // Try to revoke the old session on backend (cleanup)
+        await backendClient.revokeSession();
         configManager.clearSession();
       }
     }

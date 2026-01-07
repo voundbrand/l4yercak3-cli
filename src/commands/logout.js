@@ -1,9 +1,10 @@
 /**
  * Logout Command
- * Clears CLI session
+ * Clears CLI session both locally and on the backend
  */
 
 const configManager = require('../config/config-manager');
+const backendClient = require('../api/backend-client');
 const chalk = require('chalk');
 
 async function handleLogout() {
@@ -12,6 +13,11 @@ async function handleLogout() {
     return;
   }
 
+  // Revoke session on backend first (cleans up database)
+  console.log(chalk.gray('  Revoking session...'));
+  await backendClient.revokeSession();
+
+  // Clear local session
   configManager.clearSession();
   console.log(chalk.green('  ✅ Successfully logged out\n'));
 }

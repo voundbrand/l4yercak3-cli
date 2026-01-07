@@ -3,12 +3,15 @@
  */
 
 jest.mock('../../src/config/config-manager');
+jest.mock('../../src/api/backend-client');
 jest.mock('chalk', () => ({
   yellow: (str) => str,
   green: (str) => str,
+  gray: (str) => str,
 }));
 
 const configManager = require('../../src/config/config-manager');
+const backendClient = require('../../src/api/backend-client');
 const logoutCommand = require('../../src/commands/logout');
 
 describe('Logout Command', () => {
@@ -21,6 +24,8 @@ describe('Logout Command', () => {
     console.log = jest.fn((...args) => {
       consoleOutput.push(args.join(' '));
     });
+    // Mock revokeSession to return success
+    backendClient.revokeSession.mockResolvedValue({ success: true });
   });
 
   afterEach(() => {
@@ -56,6 +61,15 @@ describe('Logout Command', () => {
 
       await logoutCommand.handler();
 
+      expect(configManager.clearSession).toHaveBeenCalled();
+    });
+
+    it('revokes session on backend before clearing locally', async () => {
+      configManager.isLoggedIn.mockReturnValue(true);
+
+      await logoutCommand.handler();
+
+      expect(backendClient.revokeSession).toHaveBeenCalled();
       expect(configManager.clearSession).toHaveBeenCalled();
     });
 
