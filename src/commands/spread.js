@@ -135,6 +135,21 @@ async function handleSpread() {
 
     console.log('');
 
+    // Step 1.5: Project name
+    const folderName = path.basename(detection.projectPath);
+    const defaultProjectName = detection.github.repo || folderName;
+
+    const { projectName } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'projectName',
+        message: 'Project name:',
+        default: defaultProjectName,
+        validate: (input) => input.trim().length > 0 || 'Project name is required',
+      },
+    ]);
+    console.log(chalk.green(`  ✅ Project: ${projectName}\n`));
+
     // Step 2: Organization selection
     console.log(chalk.cyan('  📦 Organization Setup\n'));
     let organizationId;
@@ -438,7 +453,7 @@ async function handleSpread() {
       features,
       oauthProviders,
       productionDomain,
-      appName: detection.github.repo || organizationName,
+      appName: projectName,
       isTypeScript,
       routerType,
       frameworkType: detection.framework.type || 'unknown',
@@ -532,7 +547,7 @@ async function handleSpread() {
 
         const registrationData = {
           organizationId,
-          name: detection.github.repo || organizationName || 'My Application',
+          name: projectName,
           description: `Connected via CLI from ${detection.framework.type || 'unknown'} project`,
           source: sourceData,
           connection: {
