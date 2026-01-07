@@ -49,18 +49,42 @@ class BackendClient {
    */
   async request(method, endpoint, data = null) {
     const url = `${this.baseUrl}${endpoint}`;
+    const headers = this.getHeaders();
     const options = {
       method,
-      headers: this.getHeaders(),
+      headers,
     };
 
     if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
       options.body = JSON.stringify(data);
     }
 
+    // Debug logging - enable with L4YERCAK3_DEBUG=1
+    if (process.env.L4YERCAK3_DEBUG) {
+      console.log('\n[DEBUG] API Request:');
+      console.log(`  URL: ${url}`);
+      console.log(`  Method: ${method}`);
+      console.log(`  Headers: ${JSON.stringify(headers, null, 2)}`);
+      if (options.body) {
+        console.log(`  Body: ${options.body}`);
+      }
+    }
+
     try {
       const response = await fetch(url, options);
+
+      // Debug: log raw response info
+      if (process.env.L4YERCAK3_DEBUG) {
+        console.log('[DEBUG] API Response:');
+        console.log(`  Status: ${response.status} ${response.statusText}`);
+        console.log(`  Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`);
+      }
+
       const responseData = await response.json();
+
+      if (process.env.L4YERCAK3_DEBUG) {
+        console.log(`  Body: ${JSON.stringify(responseData, null, 2)}\n`);
+      }
 
       if (!response.ok) {
         // Create error with additional details from backend
@@ -75,6 +99,9 @@ class BackendClient {
 
       return responseData;
     } catch (error) {
+      if (process.env.L4YERCAK3_DEBUG) {
+        console.log(`[DEBUG] Request error: ${error.message}`);
+      }
       if (error.message.includes('fetch')) {
         throw new Error(`Network error: Could not connect to backend at ${this.baseUrl}`);
       }
