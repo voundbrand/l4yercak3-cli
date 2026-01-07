@@ -75,10 +75,13 @@ class ExpoDetector extends BaseDetector {
       }
 
       // Detect router type
+      // Default to 'native' (no file-based router) if no router package is found
       if (dependencies['expo-router']) {
         results.routerType = 'expo-router';
       } else if (dependencies['@react-navigation/native']) {
         results.routerType = 'react-navigation';
+      } else {
+        results.routerType = 'native'; // Basic React Native navigation
       }
 
       // Check for app.json or app.config.js (Expo config)
