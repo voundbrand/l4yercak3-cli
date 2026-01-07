@@ -569,7 +569,7 @@ async function handleSpread() {
       organizationName,
       applicationId,
       projectPathHash,
-      apiKey: `${apiKey.substring(0, 10)}...`, // Store partial key for reference only
+      apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : '(using existing)', // Store partial key for reference only
       backendUrl,
       features,
       oauthProviders,
