@@ -14,14 +14,19 @@ configManager.getBackendUrl.mockReturnValue('https://backend.test.com');
 // Need to require after mocking
 const BackendClient = require('../src/api/backend-client');
 
+// API Base URL for all CLI endpoints (Convex HTTP)
+const API_BASE_URL = 'https://aromatic-akita-723.convex.site';
+// App URL only for browser login
+const APP_URL = 'https://app.l4yercak3.com';
+
 describe('BackendClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    configManager.getBackendUrl.mockReturnValue('https://backend.test.com');
+    configManager.getBackendUrl.mockReturnValue(API_BASE_URL);
     configManager.getSession.mockReturnValue(null);
-    // Reset baseUrl and convexUrl since the module was already instantiated
-    BackendClient.baseUrl = 'https://backend.test.com';
-    BackendClient.convexUrl = 'https://aromatic-akita-723.convex.site';
+    // Reset URLs since the module was already instantiated
+    BackendClient.baseUrl = API_BASE_URL;
+    BackendClient.appUrl = APP_URL;
   });
 
   describe('getHeaders', () => {
@@ -62,7 +67,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.request('GET', '/api/test');
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://backend.test.com/api/test',
+        `${API_BASE_URL}/api/test`,
         expect.objectContaining({
           method: 'GET',
         })
@@ -80,7 +85,7 @@ describe('BackendClient', () => {
       await BackendClient.request('POST', '/api/test', { name: 'test' });
 
       expect(fetch).toHaveBeenCalledWith(
-        'https://backend.test.com/api/test',
+        `${API_BASE_URL}/api/test`,
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ name: 'test' }),
@@ -263,7 +268,8 @@ describe('BackendClient', () => {
       const state = 'test-state-token';
       const url = BackendClient.getLoginUrl(state);
 
-      expect(url).toContain('https://backend.test.com');
+      // Login URL uses APP_URL (Next.js), not API_BASE_URL
+      expect(url).toContain(APP_URL);
       expect(url).toContain('/auth/cli-login');
       expect(url).toContain('state=test-state-token');
       expect(url).toContain('callback=');
@@ -273,6 +279,7 @@ describe('BackendClient', () => {
       const state = 'test-state-token';
       const url = BackendClient.getLoginUrl(state, 'google');
 
+      expect(url).toContain(APP_URL);
       expect(url).toContain('/api/auth/oauth-signup');
       expect(url).toContain('provider=google');
       expect(url).toContain('sessionType=cli');
@@ -301,7 +308,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.generateApiKey('org-123', 'My Key', ['read', 'write']);
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/api-keys/generate'),
+        expect.stringContaining('/api/v1/auth/cli/api-keys'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({
@@ -349,7 +356,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.getOrganizations();
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/organizations'),
+        expect.stringContaining('/api/v1/auth/cli/organizations'),
         expect.objectContaining({ method: 'GET' })
       );
       expect(result.organizations).toHaveLength(1);
@@ -370,7 +377,7 @@ describe('BackendClient', () => {
       const result = await BackendClient.createOrganization('New Org');
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/v1/organizations'),
+        expect.stringContaining('/api/v1/auth/cli/organizations'),
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ name: 'New Org' }),
