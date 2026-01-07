@@ -39,6 +39,9 @@ function generateRetroPage({ title, icon, heading, headingColor, message, submes
 </html>`;
 }
 
+// CLI callback port - different from Next.js dev server (3000)
+const CLI_CALLBACK_PORT = 3333;
+
 /**
  * Start local server to receive OAuth callback
  * @param {string} expectedState - The state token to verify against
@@ -48,7 +51,7 @@ function startCallbackServer(expectedState) {
     const http = require('http');
 
     const server = http.createServer((req, res) => {
-      const url = new URL(req.url, 'http://localhost:3000');
+      const url = new URL(req.url, `http://localhost:${CLI_CALLBACK_PORT}`);
 
       if (url.pathname === '/callback') {
         const token = url.searchParams.get('token');
@@ -104,7 +107,16 @@ function startCallbackServer(expectedState) {
       }
     });
 
-    server.listen(3000, 'localhost', () => {
+    // Handle server errors (e.g., port already in use)
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        reject(new Error(`Port ${CLI_CALLBACK_PORT} is already in use. Please close any other l4yercak3 processes and try again.`));
+      } else {
+        reject(err);
+      }
+    });
+
+    server.listen(CLI_CALLBACK_PORT, 'localhost', () => {
       console.log(chalk.gray('  Waiting for authentication...'));
     });
 

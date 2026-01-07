@@ -129,7 +129,8 @@ class BackendClient {
    * @returns {string} The login URL
    */
   getLoginUrl(state, provider = null) {
-    const callbackUrl = 'http://localhost:3000/callback';
+    // Use port 3333 to avoid conflicts with Next.js dev server (port 3000)
+    const callbackUrl = 'http://localhost:3333/callback';
 
     if (provider) {
       // Direct OAuth provider URL

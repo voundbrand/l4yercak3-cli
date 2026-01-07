@@ -290,7 +290,7 @@ describe('BackendClient', () => {
       const state = 'test-state-token';
       const url = BackendClient.getLoginUrl(state, 'github');
 
-      expect(url).toContain(encodeURIComponent('http://localhost:3000/callback'));
+      expect(url).toContain(encodeURIComponent('http://localhost:3333/callback'));
     });
   });
 
