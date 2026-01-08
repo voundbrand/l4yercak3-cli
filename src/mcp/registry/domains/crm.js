@@ -49,7 +49,7 @@ Returns contacts with their details including name, email, phone, and custom fie
         },
       },
       requiresAuth: true,
-      requiredPermissions: ['view_crm'],
+      requiredPermissions: ['contacts:read'],
       handler: async (params, authContext) => {
         // Build query params
         const queryParams = new URLSearchParams();
@@ -130,7 +130,7 @@ Use this to add a customer, lead, or prospect to the user's CRM.`,
         required: ['firstName', 'lastName', 'email'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_crm'],
+      requiredPermissions: ['contacts:write'],
       handler: async (params, authContext) => {
         const response = await backendClient.request('POST', '/api/v1/crm/contacts', {
           organizationId: authContext.organizationId,
@@ -177,7 +177,7 @@ Use this to retrieve full details including activities and notes.`,
         required: ['contactId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_crm'],
+      requiredPermissions: ['contacts:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         if (params.includeActivities) queryParams.set('includeActivities', 'true');
@@ -242,7 +242,7 @@ Use this to modify contact information.`,
         required: ['contactId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_crm'],
+      requiredPermissions: ['contacts:write'],
       handler: async (params, authContext) => {
         const { contactId, ...updates } = params;
 
@@ -273,7 +273,7 @@ This performs a soft delete - the contact can be restored.`,
         required: ['contactId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_crm'],
+      requiredPermissions: ['contacts:write'],
       handler: async (params, authContext) => {
         await backendClient.request('DELETE', `/api/v1/crm/contacts/${params.contactId}`);
 
@@ -311,7 +311,7 @@ These are customer companies, not L4YERCAK3 platform organizations.`,
         },
       },
       requiresAuth: true,
-      requiredPermissions: ['view_crm'],
+      requiredPermissions: ['contacts:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         queryParams.set('organizationId', authContext.organizationId);
@@ -386,7 +386,7 @@ Use this to track a customer company in the CRM.`,
         required: ['name'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_crm'],
+      requiredPermissions: ['contacts:write'],
       handler: async (params, authContext) => {
         const response = await backendClient.request('POST', '/api/v1/crm/organizations', {
           organizationId: authContext.organizationId,
@@ -426,7 +426,7 @@ Use this to track a customer company in the CRM.`,
         required: ['crmOrganizationId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_crm'],
+      requiredPermissions: ['contacts:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         if (params.includeContacts) queryParams.set('includeContacts', 'true');
@@ -488,7 +488,7 @@ Use this to associate a contact with a company they work for.`,
         required: ['contactId', 'crmOrganizationId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_crm'],
+      requiredPermissions: ['contacts:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', '/api/v1/crm/contact-organization-links', {
           contactId: params.contactId,
@@ -527,7 +527,7 @@ Use this to record information or interactions with a contact.`,
         required: ['contactId', 'content'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_crm'],
+      requiredPermissions: ['contacts:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', `/api/v1/crm/contacts/${params.contactId}/notes`, {
           content: params.content,
@@ -572,7 +572,7 @@ Use this to track interactions with contacts.`,
         required: ['contactId', 'type', 'summary'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_crm'],
+      requiredPermissions: ['contacts:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', `/api/v1/crm/contacts/${params.contactId}/activities`, {
           type: params.type,

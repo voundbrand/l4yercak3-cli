@@ -73,7 +73,7 @@ Returns an API key for the application to use.`,
         required: ['name', 'features'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_applications'],
+      requiredPermissions: ['applications:write'],
       handler: async (params, authContext) => {
         // Generate project path hash for tracking
         const projectPathHash = params.projectPath
@@ -293,7 +293,7 @@ Returns an API key for the application to use.`,
         required: ['applicationId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_applications'],
+      requiredPermissions: ['applications:write'],
       handler: async (params, authContext) => {
         const { applicationId, ...updates } = params;
 
@@ -339,7 +339,7 @@ Triggers a sync based on configured model mappings.`,
         required: ['applicationId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_applications'],
+      requiredPermissions: ['applications:write'],
       handler: async (params, authContext) => {
         const response = await backendClient.syncApplication(params.applicationId, {
           direction: params.direction || 'bidirectional',
@@ -403,7 +403,7 @@ Model mappings define how local models sync with L4YERCAK3 types.`,
         required: ['applicationId', 'localModel', 'layerCakeType'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_applications'],
+      requiredPermissions: ['applications:write'],
       handler: async (params, authContext) => {
         // Get current application
         const appResponse = await backendClient.getApplication(params.applicationId);

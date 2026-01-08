@@ -51,7 +51,7 @@ Returns events with their basic details, status, and dates.`,
         },
       },
       requiresAuth: true,
-      requiredPermissions: ['view_events'],
+      requiredPermissions: ['events:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         queryParams.set('organizationId', authContext.organizationId);
@@ -128,7 +128,7 @@ Events start in 'draft' status and can be published when ready.`,
         required: ['name', 'startDate', 'endDate', 'location'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_events'],
+      requiredPermissions: ['events:write'],
       handler: async (params, authContext) => {
         // Convert ISO dates to timestamps
         const startDate = new Date(params.startDate).getTime();
@@ -184,7 +184,7 @@ Includes agenda, products, and optionally sponsors.`,
         required: ['eventId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_events'],
+      requiredPermissions: ['events:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         if (params.includeProducts !== false) queryParams.set('includeProducts', 'true');
@@ -245,7 +245,7 @@ Can update name, dates, location, and other properties.`,
         required: ['eventId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_events'],
+      requiredPermissions: ['events:write'],
       handler: async (params, authContext) => {
         const { eventId, startDate, endDate, ...updates } = params;
 
@@ -278,7 +278,7 @@ Changes status from 'draft' to 'published'.`,
         required: ['eventId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_events'],
+      requiredPermissions: ['events:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', `/api/v1/events/${params.eventId}/publish`);
 
@@ -306,7 +306,7 @@ Sets status to 'cancelled'. This is a soft delete.`,
         required: ['eventId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_events'],
+      requiredPermissions: ['events:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', `/api/v1/events/${params.eventId}/cancel`);
 
@@ -371,7 +371,7 @@ Replace the entire agenda with a new list of agenda items.`,
         required: ['eventId', 'agenda'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_events'],
+      requiredPermissions: ['events:write'],
       handler: async (params, authContext) => {
         await backendClient.request('PATCH', `/api/v1/events/${params.eventId}/agenda`, {
           agenda: params.agenda,
@@ -403,7 +403,7 @@ Replace the entire agenda with a new list of agenda items.`,
         required: ['eventId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_events'],
+      requiredPermissions: ['events:read'],
       handler: async (params, authContext) => {
         const response = await backendClient.request(
           'GET',
@@ -470,7 +470,7 @@ Products can be tickets, merchandise, or add-ons.`,
         required: ['eventId', 'name', 'priceInCents'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_events'],
+      requiredPermissions: ['events:write'],
       handler: async (params, authContext) => {
         const response = await backendClient.request('POST', '/api/v1/products', {
           organizationId: authContext.organizationId,
@@ -519,7 +519,7 @@ Returns people who have purchased tickets.`,
         required: ['eventId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_events'],
+      requiredPermissions: ['events:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         if (params.status) queryParams.set('status', params.status);
@@ -571,7 +571,7 @@ Sponsors are CRM organizations linked to the event.`,
         required: ['eventId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_events'],
+      requiredPermissions: ['events:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         if (params.sponsorLevel) queryParams.set('sponsorLevel', params.sponsorLevel);
@@ -629,7 +629,7 @@ Sponsors are CRM organizations linked to the event.`,
         required: ['eventId', 'crmOrganizationId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_events'],
+      requiredPermissions: ['events:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', `/api/v1/events/${params.eventId}/sponsors`, {
           crmOrganizationId: params.crmOrganizationId,

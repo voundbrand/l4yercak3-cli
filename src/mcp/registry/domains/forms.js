@@ -43,7 +43,7 @@ Returns forms with their type, status, and submission counts.`,
         },
       },
       requiresAuth: true,
-      requiredPermissions: ['view_forms'],
+      requiredPermissions: ['forms:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         queryParams.set('organizationId', authContext.organizationId);
@@ -197,7 +197,7 @@ Start with basic info, then add fields.`,
         required: ['name'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_forms'],
+      requiredPermissions: ['forms:write'],
       handler: async (params, authContext) => {
         // Build form schema
         const formSchema = {
@@ -259,7 +259,7 @@ Start with basic info, then add fields.`,
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_forms'],
+      requiredPermissions: ['forms:read'],
       handler: async (params, authContext) => {
         const response = await backendClient.request('GET', `/api/v1/forms/${params.formId}`);
 
@@ -312,7 +312,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_forms'],
+      requiredPermissions: ['forms:write'],
       handler: async (params, authContext) => {
         const { formId, ...updates } = params;
 
@@ -395,7 +395,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId', 'field'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_forms'],
+      requiredPermissions: ['forms:write'],
       handler: async (params, authContext) => {
         // Get current form to add field
         const formResponse = await backendClient.request('GET', `/api/v1/forms/${params.formId}`);
@@ -439,7 +439,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_forms'],
+      requiredPermissions: ['forms:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', `/api/v1/forms/${params.formId}/publish`);
 
@@ -466,7 +466,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_forms'],
+      requiredPermissions: ['forms:write'],
       handler: async (params, authContext) => {
         await backendClient.request('POST', `/api/v1/forms/${params.formId}/unpublish`);
 
@@ -493,7 +493,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_forms'],
+      requiredPermissions: ['forms:write'],
       handler: async (params, authContext) => {
         await backendClient.request('DELETE', `/api/v1/forms/${params.formId}`);
 
@@ -518,7 +518,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['manage_forms'],
+      requiredPermissions: ['forms:write'],
       handler: async (params, authContext) => {
         const response = await backendClient.request(
           'POST',
@@ -563,7 +563,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_forms'],
+      requiredPermissions: ['forms:read'],
       handler: async (params, authContext) => {
         const queryParams = new URLSearchParams();
         if (params.status) queryParams.set('status', params.status);
@@ -602,7 +602,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['responseId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_forms'],
+      requiredPermissions: ['forms:read'],
       handler: async (params, authContext) => {
         const response = await backendClient.request(
           'GET',
@@ -646,7 +646,7 @@ To update fields, use l4yercak3_forms_add_field or l4yercak3_forms_update_fields
         required: ['formId'],
       },
       requiresAuth: true,
-      requiredPermissions: ['view_forms'],
+      requiredPermissions: ['forms:read'],
       handler: async (params, authContext) => {
         const format = params.format || 'json';
 
