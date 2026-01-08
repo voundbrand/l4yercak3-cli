@@ -13,6 +13,7 @@ const { generateProjectPathHash } = require('../utils/file-utils');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
 const pkg = require('../../package.json');
+const { showMainMenu, executeMenuAction } = require('../utils/prompt-utils');
 
 /**
  * Helper function to create an organization
@@ -108,7 +109,9 @@ async function handleSpread() {
       
       if (!continueAnyway) {
         console.log(chalk.gray('\n  Setup cancelled.\n'));
-        process.exit(0);
+        const action = await showMainMenu({ isLoggedIn: true, isInProject: true });
+        await executeMenuAction(action);
+        return;
       }
     }
 
@@ -284,7 +287,9 @@ async function handleSpread() {
           console.log(chalk.cyan('\n  To continue, either:'));
           console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com?openWindow=integrations&panel=api-keys'));
           console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com?openWindow=store\n'));
-          process.exit(0);
+          const action = await showMainMenu({ isLoggedIn: true, isInProject: true });
+          await executeMenuAction(action);
+          return;
         } else if (existingKeys && existingKeys.keys && existingKeys.keys.length > 0) {
           // Has existing keys on backend - offer to reuse or generate new
           const activeKeys = existingKeys.keys.filter(k => k.status === 'active');
@@ -350,7 +355,9 @@ async function handleSpread() {
         console.log(chalk.cyan('\n  To continue, either:'));
         console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com?openWindow=integrations&panel=api-keys'));
         console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com?openWindow=store\n'));
-        process.exit(0);
+        const action = await showMainMenu({ isLoggedIn: true, isInProject: true });
+        await executeMenuAction(action);
+        return;
       } else if (error.code === 'API_KEY_ALREADY_LINKED') {
         console.log(chalk.yellow(`\n  ⚠️  ${error.message}`));
         if (error.suggestion) {
@@ -372,7 +379,9 @@ async function handleSpread() {
         if (generateNew) {
           apiKey = await generateNewApiKey(organizationId);
         } else {
-          process.exit(0);
+          const action = await showMainMenu({ isLoggedIn: true, isInProject: true });
+          await executeMenuAction(action);
+          return;
         }
       } else if (error.code === 'SESSION_EXPIRED' || error.code === 'INVALID_SESSION') {
         console.log(chalk.red(`\n  ❌ Session expired. Please run "l4yercak3 login" again.\n`));

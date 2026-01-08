@@ -10,6 +10,7 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const projectDetector = require('../detectors');
 const { showLogo } = require('../logo');
+const { showPostLoginMenu, executeMenuAction } = require('../utils/prompt-utils');
 
 /**
  * Generate retro Windows 95 style HTML page
@@ -262,7 +263,9 @@ async function promptSetupWizard() {
       ]);
 
       if (!reconfigure) {
-        console.log(chalk.gray('\n  Run "l4yercak3 spread" anytime to reconfigure.\n'));
+        console.log('');
+        const action = await showPostLoginMenu({ isInProject: true, hasExistingConfig: true });
+        await executeMenuAction(action);
         return;
       }
     } else {
@@ -276,7 +279,9 @@ async function promptSetupWizard() {
       ]);
 
       if (!runWizard) {
-        console.log(chalk.gray('\n  Run "l4yercak3 spread" anytime to set up your project.\n'));
+        console.log('');
+        const action = await showPostLoginMenu({ isInProject: true, hasExistingConfig: false });
+        await executeMenuAction(action);
         return;
       }
     }
