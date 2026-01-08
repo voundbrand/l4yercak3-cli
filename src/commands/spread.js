@@ -678,6 +678,10 @@ async function handleSpread() {
 
     console.log(chalk.gray('  Your project is now connected to L4YERCAK3! 🍰\n'));
 
+    // Show menu for next actions
+    const action = await showMainMenu({ isLoggedIn: true, isInProject: true, hasExistingConfig: true });
+    await executeMenuAction(action);
+
   } catch (error) {
     console.error(chalk.red(`\n  ❌ Error: ${error.message}\n`));
     if (error.stack) {
