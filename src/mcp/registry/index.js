@@ -16,6 +16,7 @@ const eventsDomain = require('./domains/events');
 const formsDomain = require('./domains/forms');
 const codegenDomain = require('./domains/codegen');
 const applicationsDomain = require('./domains/applications');
+const benefitsDomain = require('./domains/benefits');
 
 /**
  * @typedef {Object} ToolDefinition
@@ -44,6 +45,7 @@ const toolDomains = [
   crmDomain,
   eventsDomain,
   formsDomain,
+  benefitsDomain,
   codegenDomain,
 ];
 
