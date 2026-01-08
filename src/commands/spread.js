@@ -351,10 +351,33 @@ async function handleSpread() {
         console.log(chalk.gray('     • Delete an existing key at https://app.l4yercak3.com?openWindow=integrations&panel=api-keys'));
         console.log(chalk.gray('     • Upgrade your plan at https://app.l4yercak3.com?openWindow=store\n'));
         process.exit(0);
-      } else if (error.code === 'SESSION_EXPIRED') {
+      } else if (error.code === 'API_KEY_ALREADY_LINKED') {
+        console.log(chalk.yellow(`\n  ⚠️  ${error.message}`));
+        if (error.suggestion) {
+          console.log(chalk.gray(`  ${error.suggestion}`));
+        }
+        console.log(chalk.cyan('\n  Each API key can only be connected to one application.'));
+        console.log(chalk.gray('     Generate a new API key for this project.\n'));
+
+        // Offer to generate a new key
+        const { generateNew } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'generateNew',
+            message: 'Generate a new API key for this project?',
+            default: true,
+          },
+        ]);
+
+        if (generateNew) {
+          apiKey = await generateNewApiKey(organizationId);
+        } else {
+          process.exit(0);
+        }
+      } else if (error.code === 'SESSION_EXPIRED' || error.code === 'INVALID_SESSION') {
         console.log(chalk.red(`\n  ❌ Session expired. Please run "l4yercak3 login" again.\n`));
         process.exit(1);
-      } else if (error.code === 'NOT_AUTHORIZED') {
+      } else if (error.code === 'NOT_AUTHORIZED' || error.code === 'UNAUTHORIZED') {
         console.log(chalk.red(`\n  ❌ You don't have permission to manage API keys for this organization.\n`));
         process.exit(1);
       } else {
