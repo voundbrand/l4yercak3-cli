@@ -3,6 +3,7 @@
  * Generates Supabase schema, migrations, and client for L4YERCAK3 integration
  */
 
+const fs = require('fs');
 const path = require('path');
 const { ensureDir, writeFileWithBackup, checkFileOverwrite } = require('../../../utils/file-utils');
 
