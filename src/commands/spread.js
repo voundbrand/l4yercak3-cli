@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const configManager = require('../config/config-manager');
 const backendClient = require('../api/backend-client');
 const projectDetector = require('../detectors');
@@ -52,6 +53,124 @@ async function generateNewApiKey(organizationId) {
 
   console.log(chalk.green(`  ✅ API key generated\n`));
   return apiKey;
+}
+
+/**
+ * Check if the project is a git repository
+ */
+function isGitRepo(projectPath) {
+  try {
+    execSync('git rev-parse --is-inside-work-tree', {
+      cwd: projectPath,
+      stdio: 'pipe',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get git status (uncommitted changes)
+ */
+function getGitStatus(projectPath) {
+  try {
+    const status = execSync('git status --porcelain', {
+      cwd: projectPath,
+      encoding: 'utf8',
+    });
+    return status.trim();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Check for uncommitted changes and prompt user to commit first
+ * Returns true if we should proceed, false if user wants to abort
+ */
+async function checkGitStatusBeforeGeneration(projectPath) {
+  // Skip if not a git repo
+  if (!isGitRepo(projectPath)) {
+    return true;
+  }
+
+  const status = getGitStatus(projectPath);
+
+  // No uncommitted changes - proceed
+  if (!status) {
+    return true;
+  }
+
+  // Count changes
+  const changes = status.split('\n').filter(line => line.trim());
+  const modifiedCount = changes.filter(line => line.startsWith(' M') || line.startsWith('M ')).length;
+  const untrackedCount = changes.filter(line => line.startsWith('??')).length;
+  const stagedCount = changes.filter(line => /^[MADRC]/.test(line)).length;
+
+  console.log(chalk.yellow('  ⚠️  Uncommitted changes detected\n'));
+
+  if (modifiedCount > 0) {
+    console.log(chalk.gray(`     ${modifiedCount} modified file(s)`));
+  }
+  if (untrackedCount > 0) {
+    console.log(chalk.gray(`     ${untrackedCount} untracked file(s)`));
+  }
+  if (stagedCount > 0) {
+    console.log(chalk.gray(`     ${stagedCount} staged file(s)`));
+  }
+
+  console.log('');
+  console.log(chalk.gray('  We recommend committing your changes before generating'));
+  console.log(chalk.gray('  new files, so you can easily revert if needed.\n'));
+
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'How would you like to proceed?',
+      choices: [
+        {
+          name: 'Continue anyway - I\'ll handle it later',
+          value: 'continue',
+        },
+        {
+          name: 'Commit changes now - Create a checkpoint commit',
+          value: 'commit',
+        },
+        {
+          name: 'Abort - I\'ll commit manually first',
+          value: 'abort',
+        },
+      ],
+    },
+  ]);
+
+  if (action === 'abort') {
+    console.log(chalk.gray('\n  No worries! Run "l4yercak3 spread" again after committing.\n'));
+    return false;
+  }
+
+  if (action === 'commit') {
+    try {
+      // Stage all changes
+      execSync('git add -A', { cwd: projectPath, stdio: 'pipe' });
+
+      // Create commit
+      const commitMessage = 'chore: checkpoint before L4YERCAK3 integration';
+      execSync(`git commit -m "${commitMessage}"`, { cwd: projectPath, stdio: 'pipe' });
+
+      console.log(chalk.green('\n  ✅ Changes committed successfully'));
+      console.log(chalk.gray(`     Message: "${commitMessage}"`));
+      console.log(chalk.gray('     You can revert with: git reset --soft HEAD~1\n'));
+    } catch (error) {
+      console.log(chalk.yellow('\n  ⚠️  Could not create commit automatically'));
+      console.log(chalk.gray(`     ${error.message}`));
+      console.log(chalk.gray('     Proceeding with file generation anyway...\n'));
+    }
+  }
+
+  return true;
 }
 
 async function handleSpread() {
@@ -555,7 +674,13 @@ async function handleSpread() {
       }
     }
 
-    // Step 8: Generate files
+    // Step 8: Check for uncommitted changes before generating files
+    const shouldProceed = await checkGitStatusBeforeGeneration(detection.projectPath);
+    if (!shouldProceed) {
+      return;
+    }
+
+    // Step 9: Generate files
     console.log(chalk.cyan('\n  📝 Generating files...\n'));
 
     // Extract framework metadata for generation
