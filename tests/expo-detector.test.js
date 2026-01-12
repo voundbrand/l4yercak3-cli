@@ -42,11 +42,10 @@ describe('ExpoDetector', () => {
 
       const result = detector.detect('/test/project');
 
-      // Pure React Native has lower confidence (0.7)
-      // which is below the 0.8 threshold, so it won't be the "detected" match
-      // but the detector still returns useful data
+      // Pure React Native has confidence of 0.85
+      // which is above the 0.8 threshold, so it will be detected
       expect(result.detected).toBe(true);
-      expect(result.confidence).toBe(0.7);
+      expect(result.confidence).toBe(0.85);
     });
 
     it('does not detect non-Expo/React Native project', () => {

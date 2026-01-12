@@ -13,7 +13,7 @@ class ExpoDetector extends BaseDetector {
   }
 
   get priority() {
-    return 95; // High priority - specific framework
+    return 95; // Slightly lower than Next.js (100), but high enough for framework detection
   }
 
   /**
@@ -106,11 +106,11 @@ class ExpoDetector extends BaseDetector {
       }
 
       // Determine confidence based on what we found
-      let confidence = 0.7; // Base confidence for React Native
+      let confidence = 0.85; // Base confidence for React Native
       if (results.isExpo) {
-        confidence = 0.9; // Higher for Expo
+        confidence = 0.9; // Higher confidence for Expo projects
         if (results.config) {
-          confidence = 0.95; // Even higher with config file
+          confidence = 0.95; // Even higher with config file (app.json)
         }
       }
 

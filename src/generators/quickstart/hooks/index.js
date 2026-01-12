@@ -13,17 +13,35 @@ class HooksGenerator {
    * @param {Object} options - Generation options
    * @returns {Promise<Object>} - Generated file paths
    */
+  /**
+   * Check if framework is Expo/React Native
+   */
+  isMobileFramework(frameworkType) {
+    return ['expo', 'react-native'].includes(frameworkType);
+  }
+
   async generate(options) {
-    const { projectPath, features = [] } = options;
+    const { projectPath, features = [], frameworkType } = options;
+    const isMobile = this.isMobileFramework(frameworkType);
 
     const results = {};
 
-    // Determine output directory
+    // Determine output directory based on framework
     let outputDir;
-    if (fs.existsSync(path.join(projectPath, 'src'))) {
-      outputDir = path.join(projectPath, 'src', 'lib', 'l4yercak3', 'hooks');
+    if (isMobile) {
+      // Expo typically uses src/lib or just lib
+      if (fs.existsSync(path.join(projectPath, 'src'))) {
+        outputDir = path.join(projectPath, 'src', 'lib', 'l4yercak3', 'hooks');
+      } else {
+        outputDir = path.join(projectPath, 'lib', 'l4yercak3', 'hooks');
+      }
     } else {
-      outputDir = path.join(projectPath, 'lib', 'l4yercak3', 'hooks');
+      // Next.js uses src/lib
+      if (fs.existsSync(path.join(projectPath, 'src'))) {
+        outputDir = path.join(projectPath, 'src', 'lib', 'l4yercak3', 'hooks');
+      } else {
+        outputDir = path.join(projectPath, 'lib', 'l4yercak3', 'hooks');
+      }
     }
 
     ensureDir(outputDir);

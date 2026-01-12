@@ -71,16 +71,37 @@ async function handleSpread() {
     
     // Display framework detection results
     if (detection.framework.type) {
-      const frameworkName = detection.framework.type === 'nextjs' ? 'Next.js' : detection.framework.type;
+      const frameworkNames = {
+        'nextjs': 'Next.js',
+        'expo': 'Expo',
+        'react-native': 'React Native',
+      };
+      const frameworkName = frameworkNames[detection.framework.type] || detection.framework.type;
       console.log(chalk.green(`  ✅ Detected ${frameworkName} project`));
-      
+
+      const meta = detection.framework.metadata || {};
+
       if (detection.framework.type === 'nextjs') {
-        const meta = detection.framework.metadata;
         if (meta.version) {
           console.log(chalk.gray(`     Version: ${meta.version}`));
         }
         if (meta.routerType) {
           console.log(chalk.gray(`     Router: ${meta.routerType === 'app' ? 'App Router' : 'Pages Router'}`));
+        }
+        if (meta.hasTypeScript) {
+          console.log(chalk.gray('     TypeScript: Yes'));
+        }
+      } else if (detection.framework.type === 'expo' || detection.framework.type === 'react-native') {
+        if (meta.expoVersion) {
+          console.log(chalk.gray(`     Expo SDK: ${meta.expoVersion}`));
+        }
+        if (meta.reactNativeVersion) {
+          console.log(chalk.gray(`     React Native: ${meta.reactNativeVersion}`));
+        }
+        if (meta.routerType) {
+          const routerName = meta.routerType === 'expo-router' ? 'Expo Router' :
+                            meta.routerType === 'react-navigation' ? 'React Navigation' : 'Native';
+          console.log(chalk.gray(`     Navigation: ${routerName}`));
         }
         if (meta.hasTypeScript) {
           console.log(chalk.gray('     TypeScript: Yes'));

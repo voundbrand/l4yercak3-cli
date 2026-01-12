@@ -233,6 +233,18 @@ async function handleLogin() {
 }
 
 /**
+ * Get friendly framework name for display
+ */
+function getFrameworkDisplayName(frameworkType) {
+  const names = {
+    'nextjs': 'Next.js',
+    'expo': 'Expo',
+    'react-native': 'React Native',
+  };
+  return names[frameworkType] || frameworkType;
+}
+
+/**
  * Prompt user to run the setup wizard after login
  */
 async function promptSetupWizard() {
@@ -243,7 +255,7 @@ async function promptSetupWizard() {
   const isInProject = detection.framework.type !== null;
 
   if (isInProject) {
-    const frameworkName = detection.framework.type === 'nextjs' ? 'Next.js' : detection.framework.type;
+    const frameworkName = getFrameworkDisplayName(detection.framework.type);
     console.log(chalk.cyan(`  🔍 Detected ${frameworkName} project in current directory\n`));
 
     // Check if project is already configured
@@ -280,6 +292,10 @@ async function promptSetupWizard() {
 
       if (!runWizard) {
         console.log('');
+        console.log(chalk.yellow(`  ℹ️  To generate ${frameworkName}-specific code later, run:\n`));
+        console.log(chalk.cyan('     l4yercak3 spread\n'));
+        console.log(chalk.gray('  This will create components, hooks, and screens'));
+        console.log(chalk.gray(`  optimized for ${frameworkName}.\n`));
         const action = await showPostLoginMenu({ isInProject: true, hasExistingConfig: false });
         await executeMenuAction(action);
         return;
@@ -294,14 +310,17 @@ async function promptSetupWizard() {
   } else {
     // Not in a project directory
     console.log(chalk.cyan('  📋 What\'s Next?\n'));
-    console.log(chalk.gray('  To integrate L4YERCAK3 with your Next.js project:'));
+    console.log(chalk.gray('  To integrate L4YERCAK3 with your project:\n'));
     console.log(chalk.gray('  1. Navigate to your project directory'));
     console.log(chalk.gray('  2. Run: l4yercak3 spread\n'));
-    console.log(chalk.gray('  This will set up:'));
-    console.log(chalk.gray('  • API client for backend communication'));
-    console.log(chalk.gray('  • Environment variables'));
-    console.log(chalk.gray('  • OAuth authentication (optional)'));
-    console.log(chalk.gray('  • CRM, Projects, and Invoices integration\n'));
+    console.log(chalk.gray('  Supported frameworks:'));
+    console.log(chalk.gray('  • Next.js (App Router & Pages Router)'));
+    console.log(chalk.gray('  • Expo / React Native\n'));
+    console.log(chalk.gray('  The spread command will:'));
+    console.log(chalk.gray('  • Detect your framework automatically'));
+    console.log(chalk.gray('  • Generate platform-specific components'));
+    console.log(chalk.gray('  • Set up API client & environment variables'));
+    console.log(chalk.gray('  • Configure OAuth authentication (optional)\n'));
   }
 }
 

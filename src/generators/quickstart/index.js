@@ -6,10 +6,13 @@
 const databaseGenerator = require('./database');
 const hooksGenerator = require('./hooks');
 const componentGenerator = require('./components');
+const mobileComponentGenerator = require('./components-mobile');
 const pageGenerator = require('./pages');
+const screensGenerator = require('./screens');
 const apiOnlyGenerator = require('../api-only');
 const envGenerator = require('../env-generator');
 const nextauthGenerator = require('../nextauth-generator');
+const expoAuthGenerator = require('../expo-auth-generator');
 const oauthGuideGenerator = require('../oauth-guide-generator');
 const gitignoreGenerator = require('../gitignore-generator');
 
@@ -53,9 +56,13 @@ class QuickStartGenerator {
       // Pages (Next.js only)
       pages: null,
 
+      // Screens (Expo only)
+      screens: null,
+
       // Common files
       envFile: null,
       nextauth: null,
+      expoAuth: null,
       oauthGuide: null,
       gitignore: null,
     };
@@ -81,23 +88,35 @@ class QuickStartGenerator {
       results.hooks = await hooksGenerator.generate(options);
     }
 
-    // 4. Generate React components
+    // 4. Generate React components (mobile or web)
     if (options.features && options.features.length > 0) {
-      results.components = await componentGenerator.generate(options);
+      if (isMobile) {
+        results.components = await mobileComponentGenerator.generate(options);
+      } else {
+        results.components = await componentGenerator.generate(options);
+      }
     }
 
-    // 5. Generate pages (Next.js only)
-    if (isNextJs && options.features && options.features.length > 0) {
-      results.pages = await pageGenerator.generate(options);
+    // 5. Generate pages (Next.js) or screens (Expo)
+    if (options.features && options.features.length > 0) {
+      if (isNextJs) {
+        results.pages = await pageGenerator.generate(options);
+      } else if (isMobile) {
+        results.screens = await screensGenerator.generate(options);
+      }
     }
 
     // 6. Generate environment file
     results.envFile = envGenerator.generate(this.enhanceEnvOptions(options));
 
-    // 7. Generate NextAuth.js config if OAuth is enabled (Next.js only)
+    // 7. Generate auth config if OAuth is enabled
     if (options.features && options.features.includes('oauth') && options.oauthProviders) {
       if (isNextJs) {
+        // NextAuth.js for Next.js
         results.nextauth = await nextauthGenerator.generate(options);
+      } else if (isMobile) {
+        // expo-auth-session for Expo/React Native
+        results.expoAuth = await expoAuthGenerator.generate(options);
       }
     }
 
@@ -123,15 +142,19 @@ class QuickStartGenerator {
     const enhanced = { ...options };
     enhanced.additionalEnvVars = enhanced.additionalEnvVars || [];
 
+    const isMobile = this.isMobileFramework(options.frameworkType);
+    // Use EXPO_PUBLIC_ for Expo, NEXT_PUBLIC_ for Next.js
+    const publicPrefix = isMobile ? 'EXPO_PUBLIC_' : 'NEXT_PUBLIC_';
+
     if (options.selectedDatabase === 'convex') {
       enhanced.additionalEnvVars.push(
         { key: 'CONVEX_DEPLOYMENT', value: '', comment: 'Convex deployment URL (from npx convex dev)' },
-        { key: 'NEXT_PUBLIC_CONVEX_URL', value: '', comment: 'Convex public URL' }
+        { key: `${publicPrefix}CONVEX_URL`, value: '', comment: 'Convex public URL' }
       );
     } else if (options.selectedDatabase === 'supabase') {
       enhanced.additionalEnvVars.push(
-        { key: 'NEXT_PUBLIC_SUPABASE_URL', value: '', comment: 'Supabase project URL' },
-        { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', value: '', comment: 'Supabase anonymous key' },
+        { key: `${publicPrefix}SUPABASE_URL`, value: '', comment: 'Supabase project URL' },
+        { key: `${publicPrefix}SUPABASE_ANON_KEY`, value: '', comment: 'Supabase anonymous key' },
         { key: 'SUPABASE_SERVICE_ROLE_KEY', value: '', comment: 'Supabase service role key (server only)' }
       );
     }
@@ -140,9 +163,12 @@ class QuickStartGenerator {
       enhanced.additionalEnvVars.push(
         { key: 'STRIPE_SECRET_KEY', value: '', comment: 'Stripe secret key' },
         { key: 'STRIPE_WEBHOOK_SECRET', value: '', comment: 'Stripe webhook signing secret' },
-        { key: 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', value: '', comment: 'Stripe publishable key' }
+        { key: `${publicPrefix}STRIPE_PUBLISHABLE_KEY`, value: '', comment: 'Stripe publishable key' }
       );
     }
+
+    // Pass mobile flag to env generator
+    enhanced.isMobile = isMobile;
 
     return enhanced;
   }
