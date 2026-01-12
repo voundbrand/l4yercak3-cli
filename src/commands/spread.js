@@ -405,16 +405,82 @@ async function handleSpread() {
         choices: [
           { name: 'CRM (contacts, organizations)', value: 'crm', checked: true },
           { name: 'Events (event management, registrations)', value: 'events', checked: false },
-          { name: 'Products (product catalog)', value: 'products', checked: false },
-          { name: 'Checkout (payment processing)', value: 'checkout', checked: false },
-          { name: 'Tickets (ticket generation)', value: 'tickets', checked: false },
-          { name: 'Invoicing (invoice creation)', value: 'invoicing', checked: false },
-          { name: 'Forms (dynamic forms)', value: 'forms', checked: false },
-          { name: 'Projects (project management)', value: 'projects', checked: false },
+          { name: 'Forms (form builder, submissions)', value: 'forms', checked: false },
+          { name: 'Products (product catalog, inventory)', value: 'products', checked: false },
+          { name: 'Checkout (cart, payments)', value: 'checkout', checked: false },
+          { name: 'Invoicing (B2B/B2C invoices)', value: 'invoicing', checked: false },
+          { name: 'Benefits (claims, commissions)', value: 'benefits', checked: false },
+          { name: 'Certificates (CME, attendance)', value: 'certificates', checked: false },
+          { name: 'Projects (task management)', value: 'projects', checked: false },
           { name: 'OAuth Authentication', value: 'oauth', checked: false },
         ],
       },
     ]);
+
+    // Step 4.5: Integration path selection
+    console.log(chalk.cyan('\n  🛤️  Integration Path\n'));
+    const { integrationPath } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'integrationPath',
+        message: 'Choose your integration approach:',
+        choices: [
+          {
+            name: 'Quick Start (Recommended) - Full-stack with UI components & database',
+            value: 'quickstart',
+          },
+          {
+            name: 'API Only - Just the typed API client, you build the UI',
+            value: 'api-only',
+          },
+          {
+            name: 'MCP-Assisted - AI-powered custom generation with Claude Code',
+            value: 'mcp-assisted',
+          },
+        ],
+      },
+    ]);
+    console.log(chalk.green(`  ✅ Path: ${integrationPath === 'quickstart' ? 'Quick Start' : integrationPath === 'api-only' ? 'API Only' : 'MCP-Assisted'}\n`));
+
+    // Step 4.6: Database selection (for Quick Start path when no DB detected)
+    let selectedDatabase = null;
+    if (integrationPath === 'quickstart') {
+      const dbDetection = detection.database || { hasDatabase: false };
+
+      if (!dbDetection.hasDatabase) {
+        console.log(chalk.yellow('  ℹ️  No database detected in your project.\n'));
+
+        const { database } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'database',
+            message: 'Which database would you like to use?',
+            choices: [
+              {
+                name: 'Convex (Recommended) - Real-time, serverless, TypeScript-first',
+                value: 'convex',
+              },
+              {
+                name: 'Supabase - PostgreSQL with Auth, Storage, and Edge Functions',
+                value: 'supabase',
+              },
+              {
+                name: 'None - I\'ll set up my own database later',
+                value: 'none',
+              },
+            ],
+          },
+        ]);
+
+        selectedDatabase = database !== 'none' ? database : null;
+        if (selectedDatabase) {
+          console.log(chalk.green(`  ✅ Database: ${selectedDatabase}\n`));
+        }
+      } else {
+        console.log(chalk.green(`  ✅ Detected ${dbDetection.primary?.type || 'existing'} database\n`));
+        selectedDatabase = dbDetection.primary?.type || 'existing';
+      }
+    }
 
     // Step 5: OAuth provider selection (if OAuth enabled)
     let oauthProviders = [];
@@ -489,15 +555,38 @@ async function handleSpread() {
       isTypeScript,
       routerType,
       frameworkType: detection.framework.type || 'unknown',
+      integrationPath,
+      selectedDatabase,
     };
 
     const generatedFiles = await fileGenerator.generate(generationOptions);
 
     // Display results
     console.log(chalk.green('  ✅ Files generated:\n'));
+
+    // API client files (api-only and quickstart paths)
     if (generatedFiles.apiClient) {
       console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.apiClient)}`));
     }
+    if (generatedFiles.types) {
+      console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.types)}`));
+    }
+    if (generatedFiles.webhooks) {
+      console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.webhooks)}`));
+    }
+    if (generatedFiles.index) {
+      console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.index)}`));
+    }
+
+    // MCP files (mcp-assisted path)
+    if (generatedFiles.mcpConfig) {
+      console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.mcpConfig)}`));
+    }
+    if (generatedFiles.mcpGuide) {
+      console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.mcpGuide)}`));
+    }
+
+    // Common files
     if (generatedFiles.envFile) {
       console.log(chalk.gray(`     • ${path.relative(process.cwd(), generatedFiles.envFile)}`));
     }
@@ -641,6 +730,8 @@ async function handleSpread() {
       oauthProviders,
       productionDomain,
       frameworkType: detection.framework.type,
+      integrationPath,
+      selectedDatabase,
       createdAt: Date.now(),
       updatedAt: isUpdate ? Date.now() : undefined,
     };

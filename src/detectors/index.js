@@ -10,6 +10,7 @@ const registry = require('./registry');
 const githubDetector = require('./github-detector');
 const apiClientDetector = require('./api-client-detector');
 const oauthDetector = require('./oauth-detector');
+const databaseDetector = require('./database-detector');
 
 class ProjectDetector {
   /**
@@ -26,9 +27,10 @@ class ProjectDetector {
     const githubInfo = githubDetector.detect(projectPath);
     const apiClientInfo = apiClientDetector.detect(projectPath);
     const oauthInfo = oauthDetector.detect(projectPath);
+    const databaseInfo = databaseDetector.detect(projectPath);
 
     // Get detector instance if we have a match
-    const detector = frameworkDetection.detected 
+    const detector = frameworkDetection.detected
       ? registry.getDetector(frameworkDetection.detected)
       : null;
 
@@ -41,20 +43,31 @@ class ProjectDetector {
         supportedFeatures: detector?.getSupportedFeatures() || {},
         availableGenerators: detector?.getAvailableGenerators() || [],
       },
-      
+
       // Project metadata (framework-agnostic)
       github: githubInfo,
       apiClient: apiClientInfo,
       oauth: oauthInfo,
-      
+      database: databaseInfo,
+
       // Raw detection results (for debugging)
       _raw: {
         frameworkResults: frameworkDetection.allResults,
       },
-      
+
       // Project path
       projectPath,
     };
+  }
+
+  /**
+   * Detect database configuration in a project
+   *
+   * @param {string} projectPath - Path to project directory
+   * @returns {object} Database detection results
+   */
+  detectDatabase(projectPath = process.cwd()) {
+    return databaseDetector.detect(projectPath);
   }
 
   /**

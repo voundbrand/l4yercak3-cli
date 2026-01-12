@@ -5,6 +5,11 @@
  * Supports multiple frameworks:
  * - nextjs: Next.js (App Router and Pages Router)
  * - expo: Expo/React Native
+ *
+ * Supports multiple integration paths:
+ * - quickstart: Full-stack with UI components & database
+ * - api-only: Just the typed API client
+ * - mcp-assisted: AI-powered custom generation
  */
 
 const apiClientGenerator = require('./api-client-generator');
@@ -12,6 +17,9 @@ const envGenerator = require('./env-generator');
 const nextauthGenerator = require('./nextauth-generator');
 const oauthGuideGenerator = require('./oauth-guide-generator');
 const gitignoreGenerator = require('./gitignore-generator');
+const apiOnlyGenerator = require('./api-only');
+const mcpGuideGenerator = require('./mcp-guide-generator');
+const quickstartGenerator = require('./quickstart');
 
 class FileGenerator {
   /**
@@ -32,6 +40,86 @@ class FileGenerator {
    * Generate all files based on configuration
    */
   async generate(options) {
+    const integrationPath = options.integrationPath || 'api-only';
+
+    // Route to the appropriate generator based on integration path
+    switch (integrationPath) {
+      case 'api-only':
+        return this.generateApiOnly(options);
+      case 'mcp-assisted':
+        return this.generateMcpAssisted(options);
+      case 'quickstart':
+        return this.generateQuickStart(options);
+      default:
+        return this.generateLegacy(options);
+    }
+  }
+
+  /**
+   * API-Only path: Generate typed API client and types
+   */
+  async generateApiOnly(options) {
+    const results = {
+      apiClient: null,
+      types: null,
+      webhooks: null,
+      index: null,
+      envFile: null,
+      gitignore: null,
+    };
+
+    // Generate the full typed API client package
+    const apiOnlyResults = await apiOnlyGenerator.generate(options);
+    results.apiClient = apiOnlyResults.client;
+    results.types = apiOnlyResults.types;
+    results.webhooks = apiOnlyResults.webhooks;
+    results.index = apiOnlyResults.index;
+
+    // Generate environment file
+    results.envFile = envGenerator.generate(options);
+
+    // Update .gitignore
+    results.gitignore = gitignoreGenerator.generate(options);
+
+    return results;
+  }
+
+  /**
+   * MCP-Assisted path: Generate MCP config and guide
+   */
+  async generateMcpAssisted(options) {
+    const results = {
+      mcpConfig: null,
+      mcpGuide: null,
+      envFile: null,
+      gitignore: null,
+    };
+
+    // Generate MCP configuration and guide
+    const mcpResults = await mcpGuideGenerator.generate(options);
+    results.mcpConfig = mcpResults.config;
+    results.mcpGuide = mcpResults.guide;
+
+    // Generate environment file
+    results.envFile = envGenerator.generate(options);
+
+    // Update .gitignore
+    results.gitignore = gitignoreGenerator.generate(options);
+
+    return results;
+  }
+
+  /**
+   * Quick Start path: Full-stack generation with database, hooks, and components
+   */
+  async generateQuickStart(options) {
+    return quickstartGenerator.generate(options);
+  }
+
+  /**
+   * Legacy generation (backward compatibility)
+   */
+  async generateLegacy(options) {
     const results = {
       apiClient: null,
       envFile: null,
@@ -57,12 +145,10 @@ class FileGenerator {
       if (isNextJs) {
         results.nextauth = await nextauthGenerator.generate(options);
       }
-      // For mobile, OAuth is handled differently (expo-auth-session, etc.)
     }
 
     // Generate OAuth guide if OAuth is enabled
     if (options.features && options.features.includes('oauth') && options.oauthProviders) {
-      // Pass framework info so guide can be customized
       results.oauthGuide = oauthGuideGenerator.generate({
         ...options,
         isMobile,
